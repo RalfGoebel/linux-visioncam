@@ -13,3 +13,4 @@
 / {
 	model = "TI AM5728 EVM";
 };
+#include "am57xx-evm-cmem.dtsi"
