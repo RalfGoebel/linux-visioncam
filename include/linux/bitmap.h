@@ -281,18 +281,26 @@ static inline int bitmap_subset(const unsigned long *src1,
 
 static inline int bitmap_empty(const unsigned long *src, unsigned nbits)
 {
+	unsigned int tmp;
+
 	if (small_const_nbits(nbits))
 		return ! (*src & BITMAP_LAST_WORD_MASK(nbits));
 
-	return find_first_bit(src, nbits) == nbits;
+    tmp = find_first_bit(src, nbits);
+    return tmp  == nbits;
+/*	return find_first_bit(src, nbits) == nbits;*/
 }
 
 static inline int bitmap_full(const unsigned long *src, unsigned int nbits)
 {
+	unsigned int tmp;
+
 	if (small_const_nbits(nbits))
 		return ! (~(*src) & BITMAP_LAST_WORD_MASK(nbits));
 
-	return find_first_zero_bit(src, nbits) == nbits;
+    tmp = find_first_zero_bit(src, nbits);
+    return tmp == nbits;
+/*	return find_first_zero_bit(src, nbits) == nbits;*/
 }
 
 static __always_inline int bitmap_weight(const unsigned long *src, unsigned int nbits)

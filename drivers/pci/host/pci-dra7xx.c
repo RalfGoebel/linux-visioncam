@@ -122,7 +122,7 @@ static int dra7xx_pcie_establish_link(struct pcie_port *pp)
 	for (retries = 0; retries < 1000; retries++) {
 		if (dw_pcie_link_up(pp))
 			return 0;
-		usleep_range(10, 20);
+		usleep_range(100, 200);
 	}
 
 	dev_err(pp->dev, "link is not up\n");
