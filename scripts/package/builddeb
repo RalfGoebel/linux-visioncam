@@ -165,6 +165,7 @@ fi
 if grep -q '^CONFIG_GCC_PLUGINS=y' $KCONFIG_CONFIG ; then
 	(cd $objtree; find scripts/gcc-plugins -name \*.so -o -name gcc-common.h) >> "$objtree/debian/hdrobjfiles"
 fi
+(cd $srctree; find tools/include/tools -type f) >> "$objtree/debian/hdrsrcfiles"
 destdir=$kernel_headers_dir/usr/src/linux-headers-$version
 mkdir -p "$destdir"
 (cd $srctree; tar -c -f - -T -) < "$objtree/debian/hdrsrcfiles" | (cd $destdir; tar -xf -)
@@ -172,6 +173,19 @@ mkdir -p "$destdir"
 (cd $objtree; cp $KCONFIG_CONFIG $destdir/.config) # copy .config manually to be where it's expected to be
 ln -sf "/usr/src/linux-headers-$version" "$kernel_headers_dir/lib/modules/$version/build"
 rm -f "$objtree/debian/hdrsrcfiles" "$objtree/debian/hdrobjfiles"
+
+mkdir -m 755 -p "$kernel_headers_dir/DEBIAN"
+cat <<EOF > "$kernel_headers_dir/DEBIAN/postinst"
+#!/bin/sh
+
+set -e
+
+cd /usr/src/linux-headers-$version
+make scripts
+
+exit 0
+EOF
+chmod 755 "$kernel_headers_dir/DEBIAN/postinst"
 
 if [ "$ARCH" != "um" ]; then
 	create_package "$kernel_headers_packagename" "$kernel_headers_dir"
