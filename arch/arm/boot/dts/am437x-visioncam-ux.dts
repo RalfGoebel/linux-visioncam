@@ -1,0 +1,344 @@
+/*
+ * Copyright (C) 2013 Texas Instruments Incorporated - http://www.ti.com/
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+/* AM43x EPOS EVM */
+
+/dts-v1/;
+
+#include "am4372.dtsi"
+#include <dt-bindings/pinctrl/am43xx.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/pwm/pwm.h>
+#include <dt-bindings/sound/tlv320aic31xx-micbias.h>
+
+/ {
+	model = "IMAGO VisionCam uX";
+	compatible = "ti,am43x-visioncam-ux","ti,am438x","ti,am43";
+
+	chosen {
+		stdout-path = &uart0;
+	};
+
+	vmmcsd_fixed: fixedregulator-sd {
+		compatible = "regulator-fixed";
+		regulator-name = "vmmcsd_fixed";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		enable-active-high;
+	};
+};
+
+&am43xx_pinmux {
+	cpsw_default: cpsw_default {
+		pinctrl-single,pins = <
+			/* Slave 1 */
+			AM4372_IOPAD(0x90c, PIN_INPUT_PULLDOWN | MUX_MODE1)	/* mii1_crs.rmii1_crs */
+			AM4372_IOPAD(0x910, PIN_INPUT_PULLDOWN | MUX_MODE1)	/* mii1_rxerr.rmii1_rxerr */
+			AM4372_IOPAD(0x914, PIN_OUTPUT_PULLDOWN | MUX_MODE1)	/* mii1_txen.rmii1_txen */
+			AM4372_IOPAD(0x924, PIN_OUTPUT_PULLDOWN | MUX_MODE1)	/* mii1_txd1.rmii1_txd1 */
+			AM4372_IOPAD(0x928, PIN_OUTPUT_PULLDOWN | MUX_MODE1)	/* mii1_txd0.rmii1_txd0 */
+			AM4372_IOPAD(0x93c, PIN_INPUT_PULLDOWN | MUX_MODE1)	/* mii1_rxd1.rmii1_rxd1 */
+			AM4372_IOPAD(0x940, PIN_INPUT_PULLDOWN | MUX_MODE1)	/* mii1_rxd0.rmii1_rxd0 */
+			AM4372_IOPAD(0x944, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* rmii1_refclk.rmii1_refclk */
+		>;
+	};
+
+	cpsw_sleep: cpsw_sleep {
+		pinctrl-single,pins = <
+			/* Slave 1 reset value */
+			AM4372_IOPAD(0x90c, PIN_INPUT_PULLDOWN | MUX_MODE7)
+			AM4372_IOPAD(0x910, PIN_INPUT_PULLDOWN | MUX_MODE7)
+			AM4372_IOPAD(0x914, PIN_INPUT_PULLDOWN | MUX_MODE7)
+			AM4372_IOPAD(0x924, PIN_INPUT_PULLDOWN | MUX_MODE7)
+			AM4372_IOPAD(0x928, PIN_INPUT_PULLDOWN | MUX_MODE7)
+			AM4372_IOPAD(0x93c, PIN_INPUT_PULLDOWN | MUX_MODE7)
+			AM4372_IOPAD(0x940, PIN_INPUT_PULLDOWN | MUX_MODE7)
+			AM4372_IOPAD(0x944, PIN_INPUT_PULLDOWN | MUX_MODE7)
+		>;
+	};
+
+	davinci_mdio_default: davinci_mdio_default {
+		pinctrl-single,pins = <
+			/* MDIO */
+			AM4372_IOPAD(0x948, PIN_INPUT_PULLUP | SLEWCTRL_FAST | MUX_MODE0)	/* mdio_data.mdio_data */
+			AM4372_IOPAD(0x94c, PIN_OUTPUT_PULLUP | MUX_MODE0)					/* mdio_clk.mdio_clk */
+			AM4372_IOPAD(0xA28, PIN_INPUT | MUX_MODE7)							/* uart3_rxd.gpio5_2 => PHY interrupt */
+		>;
+	};
+
+	davinci_mdio_sleep: davinci_mdio_sleep {
+		pinctrl-single,pins = <
+			/* MDIO reset value */
+			AM4372_IOPAD(0x948, PIN_INPUT_PULLDOWN | MUX_MODE7)
+			AM4372_IOPAD(0x94c, PIN_INPUT_PULLDOWN | MUX_MODE7)
+			AM4372_IOPAD(0xA28, PIN_INPUT | MUX_MODE7)
+		>;
+	};
+
+	i2c0_pins: i2c0_pins {
+		pinctrl-single,pins = <
+			AM4372_IOPAD(0x988, PIN_INPUT_PULLUP | SLEWCTRL_FAST | MUX_MODE0)	/* i2c0_sda.i2c0_sda */
+			AM4372_IOPAD(0x98c, PIN_INPUT_PULLUP | SLEWCTRL_FAST | MUX_MODE0)	/* i2c0_scl.i2c0_scl */
+		>;
+	};
+
+	vpfe0_pins_default: vpfe0_pins_default {
+		pinctrl-single,pins = <
+			AM4372_IOPAD(0x9b0, PIN_INPUT_PULLUP | MUX_MODE0)  /* cam0_hd mode 0*/
+			AM4372_IOPAD(0x9b4, PIN_INPUT_PULLUP | MUX_MODE0)  /* cam0_vd mode 0*/
+			AM4372_IOPAD(0x9c0, PIN_INPUT_PULLUP | MUX_MODE0)  /* cam0_pclk mode 0*/
+			AM4372_IOPAD(0x9c4, PIN_INPUT_PULLUP | MUX_MODE0)  /* cam0_data8 mode 0*/
+			AM4372_IOPAD(0x9c8, PIN_INPUT_PULLUP | MUX_MODE0)  /* cam0_data9 mode 0*/
+			AM4372_IOPAD(0xa08, PIN_INPUT_PULLUP | MUX_MODE0)  /* cam0_data0 mode 0*/
+			AM4372_IOPAD(0xa0c, PIN_INPUT_PULLUP | MUX_MODE0)  /* cam0_data1 mode 0*/
+			AM4372_IOPAD(0xa10, PIN_INPUT_PULLUP | MUX_MODE0)  /* cam0_data2 mode 0*/
+			AM4372_IOPAD(0xa14, PIN_INPUT_PULLUP | MUX_MODE0)  /* cam0_data3 mode 0*/
+			AM4372_IOPAD(0xa18, PIN_INPUT_PULLUP | MUX_MODE0)  /* cam0_data4 mode 0*/
+			AM4372_IOPAD(0xa1c, PIN_INPUT_PULLUP | MUX_MODE0)  /* cam0_data5 mode 0*/
+			AM4372_IOPAD(0xa20, PIN_INPUT_PULLUP | MUX_MODE0)  /* cam0_data6 mode 0*/
+			AM4372_IOPAD(0xa24, PIN_INPUT_PULLUP | MUX_MODE0)  /* cam0_data7 mode 0*/
+			AM4372_IOPAD(0xa70, PIN_OUTPUT_PULLDOWN | MUX_MODE3)  /* xdma_event_intr0.clkout1 => SENSOR.CLK_IN */
+		>;
+	};
+
+	vpfe0_pins_sleep: vpfe0_pins_sleep {
+		pinctrl-single,pins = <
+			AM4372_IOPAD(0x9b0, DS0_PULL_UP_DOWN_EN | INPUT_EN | MUX_MODE7)  /* cam0_hd mode 0*/
+			AM4372_IOPAD(0x9b4, DS0_PULL_UP_DOWN_EN | INPUT_EN | MUX_MODE7)  /* cam0_vd mode 0*/
+			AM4372_IOPAD(0x9c0, DS0_PULL_UP_DOWN_EN | INPUT_EN | MUX_MODE7)  /* cam0_pclk mode 0*/
+			AM4372_IOPAD(0x9c4, DS0_PULL_UP_DOWN_EN | INPUT_EN | MUX_MODE7)  /* cam0_data8 mode 0*/
+			AM4372_IOPAD(0x9c8, DS0_PULL_UP_DOWN_EN | INPUT_EN | MUX_MODE7)  /* cam0_data9 mode 0*/
+			AM4372_IOPAD(0xa08, DS0_PULL_UP_DOWN_EN | INPUT_EN | MUX_MODE7)  /* cam0_data0 mode 0*/
+			AM4372_IOPAD(0xa0c, DS0_PULL_UP_DOWN_EN | INPUT_EN | MUX_MODE7)  /* cam0_data1 mode 0*/
+			AM4372_IOPAD(0xa10, DS0_PULL_UP_DOWN_EN | INPUT_EN | MUX_MODE7)  /* cam0_data2 mode 0*/
+			AM4372_IOPAD(0xa14, DS0_PULL_UP_DOWN_EN | INPUT_EN | MUX_MODE7)  /* cam0_data3 mode 0*/
+			AM4372_IOPAD(0xa18, DS0_PULL_UP_DOWN_EN | INPUT_EN | MUX_MODE7)  /* cam0_data4 mode 0*/
+			AM4372_IOPAD(0xa1c, DS0_PULL_UP_DOWN_EN | INPUT_EN | MUX_MODE7)  /* cam0_data5 mode 0*/
+			AM4372_IOPAD(0xa20, DS0_PULL_UP_DOWN_EN | INPUT_EN | MUX_MODE7)  /* cam0_data6 mode 0*/
+			AM4372_IOPAD(0xa24, DS0_PULL_UP_DOWN_EN | INPUT_EN | MUX_MODE7)  /* cam0_data7 mode 0*/
+		>;
+	};
+
+	gpio2_pins: gpio2_pins {
+		pinctrl-single,pins = <
+			AM4372_IOPAD(0x8e4, PIN_OUTPUT | MUX_MODE7) /* dss_hsync.gpio2_23 => FREERUN */
+		>;
+	};
+
+	gpio4_pins: gpio4_pins {
+		pinctrl-single,pins = <
+			AM4372_IOPAD(0x9d4, PIN_OUTPUT | MUX_MODE7) /* cam1_hd.gpio4_9 => SENSOR.RST */
+			AM4372_IOPAD(0xa00, PIN_OUTPUT | MUX_MODE7) /* cam1_data6.gpio4_20 => OUT0 */
+			AM4372_IOPAD(0x9f0, PIN_OUTPUT | MUX_MODE7) /* cam1_data2.gpio4_16 => OUT1 */
+			AM4372_IOPAD(0x9dc, PIN_OUTPUT | MUX_MODE7) /* cam1_pclk.gpio4_11 => OUT2 */
+/*			AM4372_IOPAD(0xa04, PIN_INPUT | MUX_MODE7)*/ /* cam1_data7.gpio4_21 => IN0 */
+			AM4372_IOPAD(0x9f4, PIN_INPUT | MUX_MODE7) /* cam1_data3.gpio4_17 => IN1 */
+			AM4372_IOPAD(0x9d0, PIN_INPUT | MUX_MODE7) /* cam1_data8.gpio4_8 => IN2 */
+		>;
+	};
+
+	pru_pins: pru_pins {
+		pinctrl-single,pins = <
+			AM4372_IOPAD(0x9d8, PIN_INPUT_PULLUP | MUX_MODE5)	/* cam1_vd.pr0_pru1_gpi2 => SWITCH */
+			AM4372_IOPAD(0x9fc, PIN_INPUT_PULLUP | MUX_MODE5)	/* cam1_data5.pr0_pru1_gpi13 => SENSOR.LED */
+			AM4372_IOPAD(0xa04, PIN_INPUT | MUX_MODE5)	/* cam1_data7.pr0_pru1_gpi15 => IN0 */
+			AM4372_IOPAD(0x8e8, PIN_INPUT | MUX_MODE6)	/* dss_pclk.pr0_pru1_gpi8 => FREERUN */
+			AM4372_IOPAD(0x9f8, PIN_OUTPUT | MUX_MODE4)	/* cam1_data4.pr0_pru1_gpo12 => SENSOR.EXP */
+			AM4372_IOPAD(0x9cc, PIN_OUTPUT | MUX_MODE3)	/* cam1_data9.pr0_pru0_gpo17 => STROBE */
+		>;
+	};
+};
+
+&mmc1 {
+	status = "okay";
+	vmmc-supply = <&vmmcsd_fixed>;
+	bus-width = <4>;
+	non-removable;
+	disable-wp;
+};
+
+&mac {
+	slaves = <1>;
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&cpsw_default>;
+	pinctrl-1 = <&cpsw_sleep>;
+	status = "okay";
+};
+
+&davinci_mdio {
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&davinci_mdio_default>;
+	pinctrl-1 = <&davinci_mdio_sleep>;
+	status = "okay";
+	phy: phy@2 {
+		reg = <2>;
+		interrupt-parent = <&gpio5>;
+		interrupts = <2 IRQ_TYPE_EDGE_FALLING>;
+	};
+};
+
+&cpsw_emac0 {
+	phy_id = <&davinci_mdio>, <2>;
+	phy-mode = "rmii";
+};
+
+&phy_sel {
+	rmii-clock-ext;	/* RMII clock is provided by external PHY */ 
+};
+
+&i2c0 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c0_pins>;
+	clock-frequency = <100000>;
+
+/*	tps65218: tps65218@24 {
+		reg = <0x24>;
+		compatible = "ti,tps65218";
+		interrupts = <GIC_SPI 7 IRQ_TYPE_NONE>;
+		interrupt-controller;
+		#interrupt-cells = <2>;
+
+		dcdc1: regulator-dcdc1 {
+			regulator-name = "vdd_core";
+			regulator-min-microvolt = <912000>;
+			regulator-max-microvolt = <1144000>;
+			regulator-boot-on;
+			regulator-always-on;
+		};
+
+		dcdc2: regulator-dcdc2 {
+			regulator-name = "vdd_mpu";
+			regulator-min-microvolt = <912000>;
+			regulator-max-microvolt = <1378000>;
+			regulator-boot-on;
+			regulator-always-on;
+		};
+
+		dcdc3: regulator-dcdc3 {
+			regulator-name = "vdcdc3";
+			regulator-boot-on;
+			regulator-always-on;
+		};
+
+		dcdc4: regulator-dcdc4 {
+			regulator-name = "vdcdc4";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			regulator-boot-on;
+			regulator-always-on;
+		};
+
+		ldo1: regulator-ldo1 {
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+			regulator-boot-on;
+			regulator-always-on;
+		};
+	};*/
+
+	at24@51 {
+		compatible = "at24,24c512";
+		pagesize = <64>;
+		reg = <0x51>;
+	};
+
+/*	mt9v032@48 {
+		compatible = "aptina,mt9v032";
+		reg = <0x5c>;
+
+		port {
+			mt9v032: endpoint {
+				remote-endpoint = <&vpfe0_ep>;
+				link-frequencies = /bits/ 64 <26000000>;
+			};
+		};
+	};*/
+};
+
+&gpio2 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&gpio2_pins>;
+};
+
+&gpio4 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&gpio4_pins>;
+};
+
+&vpfe0 {
+	compatible = "IMAGO,vcdrv-vpfe";
+	status = "okay";
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&vpfe0_pins_default>;
+	pinctrl-1 = <&vpfe0_pins_sleep>;
+};
+
+/*&vpfe0 {
+	status = "okay";
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&vpfe0_pins_default>;
+	pinctrl-1 = <&vpfe0_pins_sleep>;
+
+	port {
+		vpfe0_ep: endpoint {
+			remote-endpoint = <&mt9v032>;
+			ti,am437x-vpfe-interface = <0>;
+			bus-width = <8>;
+			hsync-active = <0>;
+			vsync-active = <0>;
+		};
+	};
+};*/
+
+
+
+&synctimer_32kclk {
+	assigned-clocks = <&mux_synctimer32k_ck>;
+	assigned-clock-parents = <&clkdiv32k_ick>;
+};
+
+/*&wkup_m3_ipc {
+	ti,scale-data-fw = "am43x-evm-scale-data.bin";
+};*/
+
+/*&cpu {
+	cpu0-supply = <&dcdc2>;
+};*/
+
+&pruss_soc_bus {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&pru_pins>;
+
+	pruss1: pruss@54400000 {
+		status = "okay";
+
+		pru1_0: pru@54434000 {
+			status = "okay";
+		};
+
+		pru1_1: pru@54438000 {
+			status = "okay";
+		};
+	};
+
+	pruss0: pruss@54440000 {
+		status = "okay";
+
+		pru0_0: pru@54474000 {
+			status = "okay";
+		};
+
+		pru0_1: pru@54478000 {
+			status = "okay";
+		};
+	};
+};
