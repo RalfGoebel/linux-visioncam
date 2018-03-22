@@ -66,6 +66,8 @@ static int tps65218_gpio_output(struct gpio_chip *gc, unsigned offset,
 static int tps65218_gpio_input(struct gpio_chip *gc, unsigned offset)
 {
 	return -EPERM;
+//    tps65218_gpio_set(gc, offset, 1);
+//    return 0;
 }
 
 static int tps65218_gpio_request(struct gpio_chip *gc, unsigned offset)
@@ -74,17 +76,17 @@ static int tps65218_gpio_request(struct gpio_chip *gc, unsigned offset)
 	struct tps65218 *tps65218 = tps65218_gpio->tps65218;
 	int ret;
 
-	if (gpiochip_line_is_open_source(gc, offset)) {
+/*	if (gpiochip_line_is_open_source(gc, offset)) {
 		dev_err(gc->parent, "can't work as open source\n");
 		return -EINVAL;
-	}
+	}*/
 
 	switch (offset) {
 	case 0:
-		if (!gpiochip_line_is_open_drain(gc, offset)) {
+/*		if (!gpiochip_line_is_open_drain(gc, offset)) {
 			dev_err(gc->parent, "GPO1 works only as open drain\n");
 			return -EINVAL;
-		}
+		}*/
 
 		/* Disable sequencer for GPO1 */
 		ret = tps65218_clear_bits(tps65218, TPS65218_REG_SEQ7,
@@ -112,10 +114,10 @@ static int tps65218_gpio_request(struct gpio_chip *gc, unsigned offset)
 		break;
 
 	case 2:
-		if (!gpiochip_line_is_open_drain(gc, offset)) {
+/*		if (!gpiochip_line_is_open_drain(gc, offset)) {
 			dev_err(gc->parent, "GPO3 works only as open drain\n");
 			return -EINVAL;
-		}
+		}*/
 
 		/* Disable sequencer for GPO3 */
 		ret = tps65218_clear_bits(tps65218, TPS65218_REG_SEQ7,
