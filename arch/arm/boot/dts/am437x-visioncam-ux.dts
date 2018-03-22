@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2013 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) Imago Technologies GmbH - http://www.imago-technologies.com/
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 
-/* AM43x EPOS EVM */
+/* IMAGO VisionCam uX */
 
 /dts-v1/;
 
@@ -14,7 +14,6 @@
 #include <dt-bindings/pinctrl/am43xx.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/pwm/pwm.h>
-#include <dt-bindings/sound/tlv320aic31xx-micbias.h>
 
 / {
 	model = "IMAGO VisionCam uX";
@@ -30,6 +29,12 @@
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 		enable-active-high;
+	};
+	
+	gpio_poweroff {
+		compatible = "gpio-poweroff";
+/*		gpios = <&tps65218_gpio 2 GPIO_OPEN_DRAIN>;*/
+		gpios = <&tps65218_gpio 2 GPIO_ACTIVE_LOW>;
 	};
 };
 
@@ -67,7 +72,6 @@
 			/* MDIO */
 			AM4372_IOPAD(0x948, PIN_INPUT_PULLUP | SLEWCTRL_FAST | MUX_MODE0)	/* mdio_data.mdio_data */
 			AM4372_IOPAD(0x94c, PIN_OUTPUT_PULLUP | MUX_MODE0)					/* mdio_clk.mdio_clk */
-			AM4372_IOPAD(0xA28, PIN_INPUT | MUX_MODE7)							/* uart3_rxd.gpio5_2 => PHY interrupt */
 		>;
 	};
 
@@ -76,7 +80,6 @@
 			/* MDIO reset value */
 			AM4372_IOPAD(0x948, PIN_INPUT_PULLDOWN | MUX_MODE7)
 			AM4372_IOPAD(0x94c, PIN_INPUT_PULLDOWN | MUX_MODE7)
-			AM4372_IOPAD(0xA28, PIN_INPUT | MUX_MODE7)
 		>;
 	};
 
@@ -142,6 +145,12 @@
 		>;
 	};
 
+	gpio5_pins: gpio5_pins {
+		pinctrl-single,pins = <
+			AM4372_IOPAD(0xA28, PIN_INPUT | MUX_MODE7)			/* uart3_rxd.gpio5_2 => PHY interrupt */
+		>;
+	};
+
 	pru_pins: pru_pins {
 		pinctrl-single,pins = <
 			AM4372_IOPAD(0x9d8, PIN_INPUT_PULLUP | MUX_MODE5)	/* cam1_vd.pr0_pru1_gpi2 => SWITCH */
@@ -197,7 +206,7 @@
 	pinctrl-0 = <&i2c0_pins>;
 	clock-frequency = <100000>;
 
-/*	tps65218: tps65218@24 {
+	tps65218: tps65218@24 {
 		reg = <0x24>;
 		compatible = "ti,tps65218";
 		interrupts = <GIC_SPI 7 IRQ_TYPE_NONE>;
@@ -240,7 +249,13 @@
 			regulator-boot-on;
 			regulator-always-on;
 		};
-	};*/
+
+		tps65218_gpio: tps65218_gpio {
+			compatible = "ti,tps65218-gpio";
+			gpio-controller;
+			#gpio-cells = <2>;
+		};
+	};
 
 	at24@51 {
 		compatible = "at24,24c512";
@@ -261,16 +276,34 @@
 	};*/
 };
 
+/* Please note that the gpio driver gets loaded before the pinmux is available.
+   If pinmux gets configured within the gpios, gpio probe gets deferred:
+   "omap_gpio 481ac000.gpio: could not find pctldev for nod
+   /ocp@44000000/l4_wkup@44c00000/scm@210000/pinmux@800/gpio2_pins, deferring probe"
+   To avoid mixed up order of gpio groups, we setup pinmux later when
+   am43xx_pinmux gets loaded: */
+ 
+&am43xx_pinmux {
+	pinctrl-names = "default";
+	pinctrl-0 = <&gpio2_pins &gpio4_pins &gpio5_pins>;
+};
+
 &gpio2 {
 	status = "okay";
-	pinctrl-names = "default";
-	pinctrl-0 = <&gpio2_pins>;
+//	pinctrl-names = "default";
+//	pinctrl-0 = <&gpio2_pins>;
 };
 
 &gpio4 {
 	status = "okay";
-	pinctrl-names = "default";
-	pinctrl-0 = <&gpio4_pins>;
+//	pinctrl-names = "default";
+//	pinctrl-0 = <&gpio4_pins>;
+};
+
+&gpio5 {
+	status = "okay";
+//	pinctrl-names = "default";
+//	pinctrl-0 = <&gpio5_pins>;
 };
 
 &vpfe0 {
@@ -309,9 +342,9 @@
 	ti,scale-data-fw = "am43x-evm-scale-data.bin";
 };*/
 
-/*&cpu {
+&cpu {
 	cpu0-supply = <&dcdc2>;
-};*/
+};
 
 &pruss_soc_bus {
 	status = "okay";
