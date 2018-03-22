@@ -676,6 +676,7 @@ dtb-$(CONFIG_SOC_DRA7XX) += \
 	am572x-idk-lcd-osd101t2045-jh.dtb \
 	am572x-idk-lcd-osd101t2587-jh.dtb \
 	am574x-idk-jailhouse.dtb \
+	am572x-visioncam-xm.dtb \
 	am571x-idk.dtb \
 	am571x-idk-lcd-osd101t2045.dtb \
 	am571x-idk-lcd-osd101t2587.dtb \
