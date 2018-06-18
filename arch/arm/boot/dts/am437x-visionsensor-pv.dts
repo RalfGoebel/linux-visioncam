@@ -6,7 +6,7 @@
  * published by the Free Software Foundation.
  */
 
-/* IMAGO VisionCam uX */
+/* IMAGO VisionSensor PV */
 
 /dts-v1/;
 
@@ -16,8 +16,8 @@
 #include <dt-bindings/pwm/pwm.h>
 
 / {
-	model = "IMAGO VisionCam uX";
-	compatible = "ti,am43x-visioncam-ux","ti,am438x","ti,am43";
+	model = "IMAGO VisionSensor PV";
+	compatible = "ti,am43x-visionsensor-pv","ti,am438x","ti,am43";
 
 	chosen {
 		stdout-path = &uart0;
@@ -129,19 +129,21 @@
 
 	gpio2_pins: gpio2_pins {
 		pinctrl-single,pins = <
-			AM4372_IOPAD(0x8e4, PIN_OUTPUT | MUX_MODE7) /* dss_hsync.gpio2_23 => FREERUN */
+			AM4372_IOPAD(0x8e4, PIN_OUTPUT | MUX_MODE7) /* dss_hsync.gpio2_23 => TrigMode */
 		>;
 	};
 
 	gpio4_pins: gpio4_pins {
 		pinctrl-single,pins = <
 			AM4372_IOPAD(0x9d4, PIN_OUTPUT | MUX_MODE7) /* cam1_hd.gpio4_9 => SENSOR.RST */
-			AM4372_IOPAD(0xa00, PIN_OUTPUT | MUX_MODE7) /* cam1_data6.gpio4_20 => OUT0 */
-			AM4372_IOPAD(0x9f0, PIN_OUTPUT | MUX_MODE7) /* cam1_data2.gpio4_16 => OUT1 */
-			AM4372_IOPAD(0x9dc, PIN_OUTPUT | MUX_MODE7) /* cam1_pclk.gpio4_11 => OUT2 */
-/*			AM4372_IOPAD(0xa04, PIN_INPUT | MUX_MODE7)*/ /* cam1_data7.gpio4_21 => IN0 */
+			AM4372_IOPAD(0x88C, PIN_OUTPUT | MUX_MODE7) /* gpmc_clk.gpio2_1 => TTLOut0 */
+			AM4372_IOPAD(0x9b8, PIN_OUTPUT | MUX_MODE7) /* cam0_field.gpio4_2 => OUT1 */
+			AM4372_IOPAD(0x9bc, PIN_OUTPUT | MUX_MODE7) /* cam0_wen.gpio4_3 => OUT2 */
+			AM4372_IOPAD(0x9ec, PIN_INPUT | MUX_MODE7) /* cam1_data1.gpio4_15 => IN0 */
 			AM4372_IOPAD(0x9f4, PIN_INPUT | MUX_MODE7) /* cam1_data3.gpio4_17 => IN1 */
 			AM4372_IOPAD(0x9d0, PIN_INPUT | MUX_MODE7) /* cam1_data8.gpio4_8 => IN2 */
+			AM4372_IOPAD(0x9e8, PIN_OUTPUT_PULLDOWN | MUX_MODE7) /* cam1_data0.gpio4_14 => TrigSW */
+			AM4372_IOPAD(0x9e0, PIN_OUTPUT_PULLDOWN | MUX_MODE7) /* cam1_field.gpio4_12 => StrobeEnable */
 		>;
 	};
 
@@ -153,10 +155,15 @@
 
 	pru_pins: pru_pins {
 		pinctrl-single,pins = <
-			AM4372_IOPAD(0x9d8, PIN_INPUT_PULLUP | MUX_MODE5)	/* cam1_vd.pr0_pru1_gpi2 => SWITCH */
+			AM4372_IOPAD(0x9d8, PIN_INPUT_PULLUP | MUX_MODE5)	/* cam1_vd.pr0_pru1_gpi2 => SWITCH0 */
 			AM4372_IOPAD(0x9fc, PIN_INPUT_PULLUP | MUX_MODE5)	/* cam1_data5.pr0_pru1_gpi13 => SENSOR.LED */
 			AM4372_IOPAD(0xa04, PIN_INPUT | MUX_MODE5)	/* cam1_data7.pr0_pru1_gpi15 => IN0 */
-			AM4372_IOPAD(0x8e8, PIN_INPUT | MUX_MODE6)	/* dss_pclk.pr0_pru1_gpi8 => FREERUN */
+			AM4372_IOPAD(0x8ec, PIN_INPUT | MUX_MODE6)	/* dss_ac_bias_en.pr0_pru1_gpi9 => TTLOut0 */
+			AM4372_IOPAD(0xa00, PIN_OUTPUT | MUX_MODE4) /* cam1_data6.pr0_pru1_gpo14 => OUT0 */
+			AM4372_IOPAD(0x8e8, PIN_INPUT | MUX_MODE6)	/* dss_pclk.pr0_pru1_gpi8 => TrigMode */
+			AM4372_IOPAD(0x9f0, PIN_INPUT | MUX_MODE5) /* cam1_data2.pr0_pru1_gpi10 => TrigSW */
+			AM4372_IOPAD(0x9dc, PIN_INPUT | MUX_MODE5) /* cam1_pclk.pr0_pru1_gpi3 => StrobeEnable */
+			AM4372_IOPAD(0x8e0, PIN_INPUT | MUX_MODE6) /* dss_vsync.pr0_pru1_gpi6 => SWITCH1 */
 			AM4372_IOPAD(0x9f8, PIN_OUTPUT | MUX_MODE4)	/* cam1_data4.pr0_pru1_gpo12 => SENSOR.EXP */
 			AM4372_IOPAD(0x9cc, PIN_OUTPUT | MUX_MODE3)	/* cam1_data9.pr0_pru0_gpo17 => STROBE */
 		>;
@@ -257,23 +264,16 @@
 		};
 	};
 
-	at24@51 {
+	at24@50 {
 		compatible = "at24,24c512";
 		pagesize = <64>;
-		reg = <0x51>;
+		reg = <0x50>;
 	};
 
-/*	mt9v032@48 {
-		compatible = "aptina,mt9v032";
-		reg = <0x5c>;
-
-		port {
-			mt9v032: endpoint {
-				remote-endpoint = <&vpfe0_ep>;
-				link-frequencies = /bits/ 64 <26000000>;
-			};
-		};
-	};*/
+	lm75: lm75@49 {
+		compatible = "lm75";
+		reg = <0x49>;
+	};
 };
 
 /* Please note that the gpio driver gets loaded before the pinmux is available.
@@ -307,29 +307,12 @@
 };
 
 &vpfe0 {
-	compatible = "IMAGO,vcdrv-vpfe";
+	compatible = "IMAGO,vsdrv-vpfe";
 	status = "okay";
 	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&vpfe0_pins_default>;
 	pinctrl-1 = <&vpfe0_pins_sleep>;
 };
-
-/*&vpfe0 {
-	status = "okay";
-	pinctrl-names = "default", "sleep";
-	pinctrl-0 = <&vpfe0_pins_default>;
-	pinctrl-1 = <&vpfe0_pins_sleep>;
-
-	port {
-		vpfe0_ep: endpoint {
-			remote-endpoint = <&mt9v032>;
-			ti,am437x-vpfe-interface = <0>;
-			bus-width = <8>;
-			hsync-active = <0>;
-			vsync-active = <0>;
-		};
-	};
-};*/
 
 
 

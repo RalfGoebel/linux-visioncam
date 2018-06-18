@@ -581,7 +581,7 @@ dtb-$(CONFIG_SOC_AM43XX) += \
 	am437x-idk-evm.dtb \
 	am437x-sbc-t43.dtb \
 	am437x-sk-evm.dtb \
-	am437x-visioncam-ux.dtb
+	am437x-visionsensor-pv.dtb
 dtb-$(CONFIG_SOC_OMAP5) += \
 	omap5-cm-t54.dtb \
 	omap5-igep0050.dtb \
