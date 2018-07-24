@@ -360,7 +360,8 @@ enum pruss_ethtype {
 
 #define MS_TO_NS(msec)		((msec) * 1000 * 1000)
 #define PRUETH_RED_TABLE_CHECK_PERIOD_MS	10
-#define PRUETH_HAS_PTP(p)       (PRUETH_HAS_PRP(p) || PRUETH_HAS_HSR(p))
+#define PRUETH_HAS_PTP(p) \
+	((PRUETH_HAS_PRP(p) || PRUETH_HAS_HSR(p)) && p->fw_data->ptp_support)
 /* NSP (Network Storm Prevention) timer re-uses NT timer */
 #define PRUETH_DEFAULT_NSP_TIMER_MS	100
 #define PRUETH_DEFAULT_NSP_TIMER_COUNT	\
@@ -471,6 +472,7 @@ struct prueth_private_data {
 	enum pruss_device driver_data;
 	struct prueth_firmwares fw_pru[PRUSS_NUM_PRUS];
 	enum fw_revision fw_rev;
+	u8 ptp_support;
 };
 
 /* data for each emac port */

@@ -4016,11 +4016,13 @@ static int prueth_netdev_init(struct prueth *prueth,
 		goto free;
 	}
 
-	emac->ptp_tx_irq = of_irq_get_byname(eth_node, "ptp_tx");
-	if (emac->ptp_tx_irq < 0) {
-		ret = emac->ptp_tx_irq;
-		if (ret != -EPROBE_DEFER)
-			dev_info(prueth->dev, "could not get ptp tx irq\n");
+	if (PRUETH_HAS_PTP(prueth)) {
+		emac->ptp_tx_irq = of_irq_get_byname(eth_node, "ptp_tx");
+		if (emac->ptp_tx_irq < 0) {
+			ret = emac->ptp_tx_irq;
+			if (ret != -EPROBE_DEFER)
+				dev_info(prueth->dev, "could not get ptp tx irq\n");
+		}
 	}
 
 	emac->msg_enable = netif_msg_init(debug_level, PRUETH_EMAC_DEBUG);
@@ -4546,7 +4548,7 @@ static struct prueth_private_data am335x_prueth_pdata = {
 		.fw_name[PRUSS_ETHTYPE_EMAC] =
 			"ti-pruss/am335x-pru1-prueth-fw.elf"
 	},
-	.fw_rev = FW_REV_V1_0,
+	.fw_rev = FW_REV_V1_0
 };
 
 /* AM437x SoC-specific firmware data */
@@ -4560,7 +4562,7 @@ static struct prueth_private_data am437x_prueth_pdata = {
 		.fw_name[PRUSS_ETHTYPE_EMAC] =
 			"ti-pruss/am437x-pru1-prueth-fw.elf"
 	},
-	.fw_rev = FW_REV_V1_0,
+	.fw_rev = FW_REV_V1_0
 };
 
 /* AM57xx SoC-specific firmware data */
@@ -4583,6 +4585,7 @@ static struct prueth_private_data am57xx_prueth_pdata = {
 			"ti-pruss/am57xx-pru1-pruprp-fw.elf",
 	},
 	.fw_rev = FW_REV_V2_1,
+	.ptp_support = 1
 };
 
 /* 66AK2G SoC-specific firmware data */
@@ -4596,7 +4599,7 @@ static struct prueth_private_data k2g_prueth_pdata = {
 		.fw_name[PRUSS_ETHTYPE_EMAC] =
 			"ti-pruss/k2g-pru1-prueth-fw.elf"
 	},
-	.fw_rev = FW_REV_V2_1,
+	.fw_rev = FW_REV_V2_1
 };
 
 static const struct of_device_id prueth_dt_match[] = {
