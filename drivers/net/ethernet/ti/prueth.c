@@ -4542,11 +4542,19 @@ static struct prueth_private_data am335x_prueth_pdata = {
 	.driver_data = PRUSS_AM3359,
 	.fw_pru[PRUSS_PRU0] = {
 		.fw_name[PRUSS_ETHTYPE_EMAC] =
-			"ti-pruss/am335x-pru0-prueth-fw.elf"
+			"ti-pruss/am335x-pru0-prueth-fw.elf",
+		.fw_name[PRUSS_ETHTYPE_HSR] =
+			"ti-pruss/am335x-pru0-pruhsr-fw.elf",
+		.fw_name[PRUSS_ETHTYPE_PRP] =
+			"ti-pruss/am335x-pru0-pruprp-fw.elf"
 	},
 	.fw_pru[PRUSS_PRU1] = {
 		.fw_name[PRUSS_ETHTYPE_EMAC] =
-			"ti-pruss/am335x-pru1-prueth-fw.elf"
+			"ti-pruss/am335x-pru1-prueth-fw.elf",
+		.fw_name[PRUSS_ETHTYPE_HSR] =
+			"ti-pruss/am335x-pru1-pruhsr-fw.elf",
+		.fw_name[PRUSS_ETHTYPE_PRP] =
+			"ti-pruss/am335x-pru1-pruprp-fw.elf"
 	},
 	.fw_rev = FW_REV_V1_0
 };
@@ -4556,11 +4564,19 @@ static struct prueth_private_data am437x_prueth_pdata = {
 	.driver_data = PRUSS_AM4376,
 	.fw_pru[PRUSS_PRU0] = {
 		.fw_name[PRUSS_ETHTYPE_EMAC] =
-			"ti-pruss/am437x-pru0-prueth-fw.elf"
+			"ti-pruss/am437x-pru0-prueth-fw.elf",
+		.fw_name[PRUSS_ETHTYPE_HSR] =
+			"ti-pruss/am437x-pru0-pruhsr-fw.elf",
+		.fw_name[PRUSS_ETHTYPE_PRP] =
+			"ti-pruss/am437x-pru0-pruprp-fw.elf"
 	},
 	.fw_pru[PRUSS_PRU1] = {
 		.fw_name[PRUSS_ETHTYPE_EMAC] =
-			"ti-pruss/am437x-pru1-prueth-fw.elf"
+			"ti-pruss/am437x-pru1-prueth-fw.elf",
+		.fw_name[PRUSS_ETHTYPE_HSR] =
+			"ti-pruss/am437x-pru1-pruhsr-fw.elf",
+		.fw_name[PRUSS_ETHTYPE_PRP] =
+			"ti-pruss/am437x-pru1-pruprp-fw.elf"
 	},
 	.fw_rev = FW_REV_V1_0
 };
@@ -4593,11 +4609,19 @@ static struct prueth_private_data k2g_prueth_pdata = {
 	.driver_data = PRUSS_K2G,
 	.fw_pru[PRUSS_PRU0] = {
 		.fw_name[PRUSS_ETHTYPE_EMAC] =
-			"ti-pruss/k2g-pru0-prueth-fw.elf"
+			"ti-pruss/k2g-pru0-prueth-fw.elf",
+		.fw_name[PRUSS_ETHTYPE_HSR] =
+			"ti-pruss/k2g-pru0-pruhsr-fw.elf",
+		.fw_name[PRUSS_ETHTYPE_PRP] =
+			"ti-pruss/k2g-pru0-pruprp-fw.elf"
 	},
 	.fw_pru[PRUSS_PRU1] = {
 		.fw_name[PRUSS_ETHTYPE_EMAC] =
-			"ti-pruss/k2g-pru1-prueth-fw.elf"
+			"ti-pruss/k2g-pru1-prueth-fw.elf",
+		.fw_name[PRUSS_ETHTYPE_HSR] =
+			"ti-pruss/k2g-pru1-pruhsr-fw.elf",
+		.fw_name[PRUSS_ETHTYPE_PRP] =
+			"ti-pruss/k2g-pru1-pruprp-fw.elf"
 	},
 	.fw_rev = FW_REV_V2_1
 };
