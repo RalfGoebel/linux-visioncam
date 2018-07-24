@@ -1175,10 +1175,8 @@ static int prueth_hsr_prp_lre_init(struct prueth *prueth)
 {
 	void __iomem *sram = prueth->mem[PRUETH_MEM_SHARED_RAM].va;
 
-	if (PRUETH_HAS_HSR(prueth))
-		memset_io(sram + LRE_START, 0, LRE_STATS_DMEM_SIZE_HSR);
-	else
-		memset_io(sram + LRE_START, 0, LRE_STATS_DMEM_SIZE);
+	memset_io(sram + LRE_START, 0, LRE_STATS_DMEM_SIZE);
+
 	writel(IEC62439_CONST_DUPLICATE_DISCARD,
 	       sram + LRE_DUPLICATE_DISCARD);
 	writel(IEC62439_CONST_TRANSPARENT_RECEPTION_REMOVE_RCT,

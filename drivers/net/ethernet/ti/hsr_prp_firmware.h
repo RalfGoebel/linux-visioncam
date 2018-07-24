@@ -24,7 +24,7 @@
 #define MODEM                             0x05
 
 /* PRU0 DMEM */
-#define DBG_START                         0x1C00
+#define DBG_START                         0x1E00
 
 #define DUPLICATE_HOST_TABLE              0x0200
 #define DUPLICATE_HOST_TABLE_END          0x19f4
@@ -64,8 +64,7 @@
 
 #define DUPLICATE_PORT_TABLE_DMEM_SIZE        0x0C00
 #define DUPLICATE_HOST_TABLE_DMEM_SIZE        0x1800
-#define LRE_STATS_DMEM_SIZE_HSR               0x0064
-#define LRE_STATS_DMEM_SIZE                   0x0070
+#define LRE_STATS_DMEM_SIZE                   0x0088
 #define DEBUG_COUNTER_DMEM_SIZE               0x0050
 
 #define DUPLICATE_HOST_TABLE_SIZE_INIT         0x00800004  /* N = 128, M = 4 */
