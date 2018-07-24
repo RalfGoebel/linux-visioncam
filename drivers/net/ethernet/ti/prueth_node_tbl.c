@@ -28,13 +28,14 @@ static void pru2host_mac(u8 *mac)
 	swap(mac[4], mac[5]);
 }
 
-static u16 get_hash(u8 *mac)
+static u16 get_hash(u8 *mac, u16 hash_mask)
 {
 	int j;
 	u16 hash;
 
 	for (j = 0, hash = 0; j < ETHER_ADDR_LEN; j++)
 		hash ^= mac[j];
+	hash = hash & hash_mask;
 
 	return hash;
 }
@@ -132,6 +133,7 @@ void node_table_init(struct prueth *prueth)
 	nt->nt_array_max_entries = fw_offsets->nt_array_max_entries;
 	nt->bin_array_max_entries = fw_offsets->bin_array_max_entries;
 	nt->index_array_max_entries = fw_offsets->index_array_max_entries;
+	nt->hash_mask = fw_offsets->hash_mask;
 
 	for (j = 0; j < fw_offsets->index_array_max_entries; j++)
 		IND_BINOFS(j) = fw_offsets->bin_array_max_entries;
@@ -232,7 +234,8 @@ static void update_indexes(u16 start, u16 end, struct node_tbl *nt)
 
 	hash_prev = 0xffff; /* invalid hash */
 	for (; start <= end; start++) {
-		hash = get_hash(nt->bin_array->bin_tbl[start].src_mac_id);
+		hash = get_hash(nt->bin_array->bin_tbl[start].src_mac_id,
+				nt->hash_mask);
 		if (hash != hash_prev)
 			IND_BINOFS(hash) = start;
 		hash_prev = hash;
@@ -298,7 +301,7 @@ static int node_table_insert_from_queue(struct node_tbl *nt,
 	memcpy(macid, entry->mac, ETHER_ADDR_LEN);
 	pru2host_mac(macid);
 
-	hash = get_hash(macid);
+	hash = get_hash(macid, nt->hash_mask);
 
 	not_found = 1;
 	if (IND_BIN_NO(hash) == 0) {
@@ -391,7 +394,8 @@ void node_table_check_and_remove(struct node_tbl *nt, u16 forget_time)
 			continue;
 
 		if (node_expired(nt, node, forget_time)) {
-			hash = get_hash(nt->bin_array->bin_tbl[j].src_mac_id);
+			hash = get_hash(nt->bin_array->bin_tbl[j].src_mac_id,
+					nt->hash_mask);
 
 			/* remove entry from bin array */
 			end_bin = IND_BINOFS(hash) + IND_BIN_NO(hash) - 1;

@@ -459,6 +459,7 @@ struct prueth_fw_offsets {
 	u32 index_array_max_entries;
 	u32 bin_array_max_entries;
 	u32 nt_array_max_entries;
+	u16 hash_mask;
 };
 
 /**

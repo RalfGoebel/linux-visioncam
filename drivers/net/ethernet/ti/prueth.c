@@ -96,6 +96,7 @@ module_param(pruss2_mc_mask, charp, 0444);
 MODULE_PARM_DESC(pruss2_mc_mask, "Choose pruss2 MC mask");
 
 const struct prueth_fw_offsets fw_offsets_v1_0 = {
+	.hash_mask = V1_0_HASH_MASK,
 	.index_array_offset = V1_0_INDEX_ARRAY_NT,
 	.bin_array_offset = V1_0_BIN_ARRAY,
 	.nt_array_offset = V1_0_NODE_TABLE_NEW,
@@ -108,6 +109,7 @@ const struct prueth_fw_offsets fw_offsets_v1_0 = {
 };
 
 const struct prueth_fw_offsets fw_offsets_v2_1 = {
+	.hash_mask = V2_1_HASH_MASK,
 	.index_array_offset = V2_1_INDEX_ARRAY_NT,
 	.bin_array_offset = V2_1_BIN_ARRAY,
 	.nt_array_offset = V2_1_NODE_TABLE_NEW,
