@@ -443,6 +443,24 @@ struct prueth_firmwares {
 	const char *fw_name[PRUSS_ETHTYPE_MAX];
 };
 
+enum fw_revision {
+	FW_REV_V1_0 = 0,
+	FW_REV_V2_1
+};
+
+/* Node Table (nt) offsets/size information */
+struct prueth_fw_offsets {
+	u32 index_array_offset;
+	u32 bin_array_offset;
+	u32 nt_array_offset;
+	u32 index_array_loc;
+	u32 bin_array_loc;
+	u32 nt_array_loc;
+	u32 index_array_max_entries;
+	u32 bin_array_max_entries;
+	u32 nt_array_max_entries;
+};
+
 /**
  * struct prueth_private_data - PRU Ethernet private data
  * @driver_data: soc that contains the pruss
@@ -451,6 +469,7 @@ struct prueth_firmwares {
 struct prueth_private_data {
 	enum pruss_device driver_data;
 	struct prueth_firmwares fw_pru[PRUSS_NUM_PRUS];
+	enum fw_revision fw_rev;
 };
 
 /* data for each emac port */
@@ -584,6 +603,7 @@ struct prueth {
 	struct prueth_emac *emac[PRUETH_NUM_MACS];
 	struct net_device *registered_netdevs[PRUETH_NUM_MACS];
 	const struct prueth_private_data *fw_data;
+	const struct prueth_fw_offsets *fw_offsets;
 	int pruss_id;
 	size_t ocmc_ram_size;
 	unsigned int eth_type;
