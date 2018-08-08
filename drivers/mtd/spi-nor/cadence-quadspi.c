@@ -101,6 +101,7 @@ struct cqspi_st {
 #define CQSPI_INST_TYPE_SINGLE			0
 #define CQSPI_INST_TYPE_DUAL			1
 #define CQSPI_INST_TYPE_QUAD			2
+#define CQSPI_INST_TYPE_OCTAL			3
 
 #define CQSPI_DUMMY_CLKS_PER_BYTE		8
 #define CQSPI_DUMMY_BYTES_MAX			4
@@ -901,6 +902,9 @@ static int cqspi_set_protocol(struct spi_nor *nor, const int read)
 		case SNOR_PROTO_1_1_4:
 			f_pdata->data_width = CQSPI_INST_TYPE_QUAD;
 			break;
+		case SNOR_PROTO_1_1_8:
+			f_pdata->data_width = CQSPI_INST_TYPE_OCTAL;
+			break;
 		default:
 			return -EINVAL;
 		}
@@ -926,10 +930,12 @@ static ssize_t cqspi_write(struct spi_nor *nor, loff_t to,
 	if (ret)
 		return ret;
 
-	if (f_pdata->use_direct_mode)
+	if (f_pdata->use_direct_mode) {
 		memcpy_toio(cqspi->ahb_base + to, buf, len);
-	else
+		ret = cqspi_wait_idle(cqspi);
+	} else {
 		ret = cqspi_indirect_write_execute(nor, to, buf, len);
+	}
 	if (ret)
 		return ret;
 
@@ -1207,6 +1213,7 @@ static int cqspi_setup_flash(struct cqspi_st *cqspi, struct device_node *np)
 			SNOR_HWCAPS_READ_FAST |
 			SNOR_HWCAPS_READ_1_1_2 |
 			SNOR_HWCAPS_READ_1_1_4 |
+			SNOR_HWCAPS_READ_1_1_8 |
 			SNOR_HWCAPS_PP,
 	};
 	struct platform_device *pdev = cqspi->pdev;
@@ -1456,6 +1463,10 @@ static const struct of_device_id cqspi_dt_ids[] = {
 	},
 	{
 		.compatible = "ti,k2g-qspi",
+		.data = (void *)CQSPI_NEEDS_WR_DELAY,
+	},
+	{
+		.compatible = "ti,am654-ospi",
 		.data = (void *)CQSPI_NEEDS_WR_DELAY,
 	},
 	{ /* end of table */ }
