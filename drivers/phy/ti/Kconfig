@@ -20,6 +20,17 @@ config PHY_DM816X_USB
 	help
 	  Enable this for dm816x USB to work.
 
+config PHY_AM654
+	tristate "TI AM654 SERDES support"
+	depends on OF && ARCH_K3 || COMPILE_TEST
+	select GENERIC_PHY
+	select MULTIPLEXER
+	select REGMAP_MMIO
+	select MUX_MMIO
+	help
+	  This option enables support for TI AM654 SerDes PHY used for
+	  PCIe.
+
 config OMAP_CONTROL_PHY
 	tristate "OMAP CONTROL PHY Driver"
 	depends on ARCH_OMAP2PLUS || COMPILE_TEST
@@ -84,3 +95,10 @@ config PHY_TI_KEYSTONE_SERDES
 	help
 	  This option enables support for TI Keystone SerDes PHY found
 	  in peripherals GBE, 10GBE and PCIe.
+
+config PHY_AM654_MMC
+	bool "TI AM654 MMC PHY Support"
+	select GENERIC_PHY
+	help
+	  This option enables support for the Physical layer for MMC host
+	  controllers present on TI AM654 SOCs.
