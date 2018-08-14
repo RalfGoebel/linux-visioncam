@@ -92,19 +92,61 @@ void __dw_pcie_write_dbi(struct dw_pcie *pci, void __iomem *base, u32 reg,
 		dev_err(pci->dev, "write DBI address failed\n");
 }
 
+u32 __dw_pcie_read_dbi2(struct dw_pcie *pci, void __iomem *base, u32 reg,
+			size_t size)
+{
+	int ret;
+	u32 val;
+
+	if (pci->ops->read_dbi2)
+		return pci->ops->read_dbi2(pci, base, reg, size);
+
+	ret = dw_pcie_read(base + reg, size, &val);
+	if (ret)
+		dev_err(pci->dev, "read DBI address failed\n");
+
+	return val;
+}
+
+void __dw_pcie_write_dbi2(struct dw_pcie *pci, void __iomem *base, u32 reg,
+			  size_t size, u32 val)
+{
+	int ret;
+
+	if (pci->ops->write_dbi2) {
+		pci->ops->write_dbi2(pci, base, reg, size, val);
+		return;
+	}
+
+	ret = dw_pcie_write(base + reg, size, val);
+	if (ret)
+		dev_err(pci->dev, "write DBI address failed\n");
+}
+
 static u32 dw_pcie_readl_ob_unroll(struct dw_pcie *pci, u32 index, u32 reg)
 {
 	u32 offset = PCIE_GET_ATU_OUTB_UNR_REG_OFFSET(index);
+	void __iomem *base = pci->atu_base;
+	u32 val;
+	int ret;
 
-	return dw_pcie_readl_dbi(pci, offset + reg);
+	ret = dw_pcie_read(base + offset + reg, 0x4, &val);
+	if (ret)
+		dev_err(pci->dev, "read DBI address failed\n");
+
+	return val;
 }
 
 static void dw_pcie_writel_ob_unroll(struct dw_pcie *pci, u32 index, u32 reg,
 				     u32 val)
 {
 	u32 offset = PCIE_GET_ATU_OUTB_UNR_REG_OFFSET(index);
+	void __iomem *base = pci->atu_base;
+	int ret;
 
-	dw_pcie_writel_dbi(pci, offset + reg, val);
+	ret = dw_pcie_write(base + offset + reg, 0x4, val);
+	if (ret)
+		dev_err(pci->dev, "write DBI address failed\n");
 }
 
 static void dw_pcie_prog_outbound_atu_unroll(struct dw_pcie *pci, int index,
@@ -143,8 +185,8 @@ static void dw_pcie_prog_outbound_atu_unroll(struct dw_pcie *pci, int index,
 	dev_err(pci->dev, "outbound iATU is not being enabled\n");
 }
 
-void dw_pcie_prog_outbound_atu(struct dw_pcie *pci, int index, int type,
-			       u64 cpu_addr, u64 pci_addr, u32 size)
+int dw_pcie_prog_outbound_atu(struct dw_pcie *pci, int index, int type,
+			      u64 cpu_addr, u64 pci_addr, u32 size)
 {
 	u32 retries, val;
 
@@ -154,7 +196,7 @@ void dw_pcie_prog_outbound_atu(struct dw_pcie *pci, int index, int type,
 	if (pci->iatu_unroll_enabled) {
 		dw_pcie_prog_outbound_atu_unroll(pci, index, type, cpu_addr,
 						 pci_addr, size);
-		return;
+		return 0;
 	}
 
 	dw_pcie_writel_dbi(pci, PCIE_ATU_VIEWPORT,
@@ -179,26 +221,38 @@ void dw_pcie_prog_outbound_atu(struct dw_pcie *pci, int index, int type,
 	for (retries = 0; retries < LINK_WAIT_MAX_IATU_RETRIES; retries++) {
 		val = dw_pcie_readl_dbi(pci, PCIE_ATU_CR2);
 		if (val & PCIE_ATU_ENABLE)
-			return;
+			return 0;
 
 		usleep_range(LINK_WAIT_IATU_MIN, LINK_WAIT_IATU_MAX);
 	}
 	dev_err(pci->dev, "outbound iATU is not being enabled\n");
+	return -EBUSY;
 }
 
 static u32 dw_pcie_readl_ib_unroll(struct dw_pcie *pci, u32 index, u32 reg)
 {
 	u32 offset = PCIE_GET_ATU_INB_UNR_REG_OFFSET(index);
+	void __iomem *base = pci->atu_base;
+	u32 val;
+	int ret;
 
-	return dw_pcie_readl_dbi(pci, offset + reg);
+	ret = dw_pcie_read(base + offset + reg, 0x4, &val);
+	if (ret)
+		dev_err(pci->dev, "read DBI address failed\n");
+
+	return val;
 }
 
 static void dw_pcie_writel_ib_unroll(struct dw_pcie *pci, u32 index, u32 reg,
 				     u32 val)
 {
 	u32 offset = PCIE_GET_ATU_INB_UNR_REG_OFFSET(index);
+	void __iomem *base = pci->atu_base;
+	int ret;
 
-	dw_pcie_writel_dbi(pci, offset + reg, val);
+	ret = dw_pcie_write(base + offset + reg, 0x4, val);
+	if (ret)
+		dev_err(pci->dev, "write DBI address failed\n");
 }
 
 static int dw_pcie_prog_inbound_atu_unroll(struct dw_pcie *pci, int index,
@@ -342,6 +396,17 @@ int dw_pcie_link_up(struct dw_pcie *pci)
 		(!(val & PCIE_PHY_DEBUG_R1_LINK_IN_TRAINING)));
 }
 
+static u8 dw_pcie_iatu_unroll_enabled(struct dw_pcie *pci)
+{
+	u32 val;
+
+	val = dw_pcie_readl_dbi(pci, PCIE_ATU_VIEWPORT);
+	if (val == 0xffffffff)
+		return 1;
+
+	return 0;
+}
+
 void dw_pcie_setup(struct dw_pcie *pci)
 {
 	int ret;
@@ -349,6 +414,15 @@ void dw_pcie_setup(struct dw_pcie *pci)
 	u32 lanes;
 	struct device *dev = pci->dev;
 	struct device_node *np = dev->of_node;
+
+	if (pci->version >= 0x480A || (!pci->version &&
+				       dw_pcie_iatu_unroll_enabled(pci))) {
+		pci->iatu_unroll_enabled = true;
+		if (!pci->atu_base)
+			pci->atu_base = pci->dbi_base + PCIE_ATU_BASE_OFFSET;
+	}
+	dev_dbg(pci->dev, "iATU unroll: %s\n", pci->iatu_unroll_enabled ?
+		"enabled" : "disabled");
 
 	ret = of_property_read_u32(np, "num-lanes", &lanes);
 	if (ret)

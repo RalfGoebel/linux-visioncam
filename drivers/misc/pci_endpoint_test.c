@@ -27,6 +27,7 @@
 #include <linux/module.h>
 #include <linux/mutex.h>
 #include <linux/random.h>
+#include <linux/sizes.h>
 #include <linux/slab.h>
 #include <linux/pci.h>
 #include <linux/pci_ids.h>
@@ -67,6 +68,15 @@
 
 #define PCI_ENDPOINT_TEST_SIZE		0x1c
 #define PCI_ENDPOINT_TEST_CHECKSUM	0x20
+
+#define K2G_IB_START_L0(n)		(0x304 + (0x10 * (n)))
+#define K2G_IB_START_HI(n)		(0x308 + (0x10 * (n)))
+
+#define PCI_DEVICE_ID_TI_AM654		0xb00c
+
+#define is_k2g_pci_dev(pdev)		((pdev)->device == PCI_DEVICE_ID_TI_K2G)
+#define is_am654_pci_dev(pdev)		\
+		((pdev)->device == PCI_DEVICE_ID_TI_AM654)
 
 static DEFINE_IDA(pci_endpoint_test_ida);
 
@@ -423,12 +433,16 @@ static long pci_endpoint_test_ioctl(struct file *file, unsigned int cmd,
 	int ret = -EINVAL;
 	enum pci_barno bar;
 	struct pci_endpoint_test *test = to_endpoint_test(file->private_data);
+	struct pci_dev *pdev = test->pdev;
 
 	mutex_lock(&test->mutex);
 	switch (cmd) {
 	case PCITEST_BAR:
 		bar = arg;
 		if (bar < 0 || bar > 5)
+			goto ret;
+		if ((is_k2g_pci_dev(pdev) || is_am654_pci_dev(pdev)) &&
+		    bar == BAR_0)
 			goto ret;
 		ret = pci_endpoint_test_bar(test, bar);
 		break;
@@ -458,6 +472,28 @@ static const struct file_operations pci_endpoint_test_fops = {
 	.owner = THIS_MODULE,
 	.unlocked_ioctl = pci_endpoint_test_ioctl,
 };
+
+static int pci_endpoint_test_k2g_init(struct pci_endpoint_test *test)
+{
+	struct pci_dev *pdev = test->pdev;
+	enum pci_barno bar;
+	resource_size_t start;
+
+	if (!test->bar[0])
+		return -EINVAL;
+
+	for (bar = BAR_1; bar <= BAR_5; bar++) {
+		start = pci_resource_start(pdev, bar);
+		pci_endpoint_test_bar_writel(test, BAR_0,
+					     K2G_IB_START_L0(bar - 1),
+					     lower_32_bits(start));
+		pci_endpoint_test_bar_writel(test, BAR_0,
+					     K2G_IB_START_HI(bar - 1),
+					     upper_32_bits(start));
+	}
+
+	return 0;
+}
 
 static int pci_endpoint_test_probe(struct pci_dev *pdev,
 				   const struct pci_device_id *ent)
@@ -489,8 +525,8 @@ static int pci_endpoint_test_probe(struct pci_dev *pdev,
 	data = (struct pci_endpoint_test_data *)ent->driver_data;
 	if (data) {
 		test_reg_bar = data->test_reg_bar;
+		test->test_reg_bar = test_reg_bar;
 		test->alignment = data->alignment;
-		no_msi = data->no_msi;
 	}
 
 	init_completion(&test->irq_raised);
@@ -534,12 +570,14 @@ static int pci_endpoint_test_probe(struct pci_dev *pdev,
 	}
 
 	for (bar = BAR_0; bar <= BAR_5; bar++) {
-		base = pci_ioremap_bar(pdev, bar);
-		if (!base) {
-			dev_err(dev, "failed to read BAR%d\n", bar);
-			WARN_ON(bar == test_reg_bar);
+		if (pci_resource_flags(pdev, bar) & IORESOURCE_MEM) {
+			base = pci_ioremap_bar(pdev, bar);
+			if (!base) {
+				dev_err(dev, "failed to read BAR%d\n", bar);
+				WARN_ON(bar == test_reg_bar);
+			}
+			test->bar[bar] = base;
 		}
-		test->bar[bar] = base;
 	}
 
 	test->base = test->bar[test_reg_bar];
@@ -548,6 +586,12 @@ static int pci_endpoint_test_probe(struct pci_dev *pdev,
 		dev_err(dev, "Cannot perform PCI test without BAR%d\n",
 			test_reg_bar);
 		goto err_iounmap;
+	}
+
+	if (is_k2g_pci_dev(pdev)) {
+		err = pci_endpoint_test_k2g_init(test);
+		if (err)
+			goto err_iounmap;
 	}
 
 	pci_set_drvdata(pdev, test);
@@ -629,9 +673,25 @@ static void pci_endpoint_test_remove(struct pci_dev *pdev)
 	pci_disable_device(pdev);
 }
 
+static const struct pci_endpoint_test_data k2g_data = {
+	.test_reg_bar = BAR_1,
+	.alignment = SZ_1M,
+};
+
+static const struct pci_endpoint_test_data am654_data = {
+	.test_reg_bar = BAR_2,
+	.alignment = SZ_64K,
+};
+
 static const struct pci_device_id pci_endpoint_test_tbl[] = {
 	{ PCI_DEVICE(PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_DRA74x) },
 	{ PCI_DEVICE(PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_DRA72x) },
+	{ PCI_DEVICE(PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_K2G),
+	  .driver_data = (kernel_ulong_t)&k2g_data
+	},
+	{ PCI_DEVICE(PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_AM654),
+	  .driver_data = (kernel_ulong_t)&am654_data
+	},
 	{ }
 };
 MODULE_DEVICE_TABLE(pci, pci_endpoint_test_tbl);
