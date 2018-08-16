@@ -84,7 +84,7 @@ static void omap_plane_atomic_update(struct drm_plane *plane,
 	info.rotation = DRM_MODE_ROTATE_0;
 	info.global_alpha = omap_state->global_alpha;
 	info.pre_mult_alpha = omap_state->pre_mult_alpha;
-	info.zorder = state->zpos;
+	info.zorder = state->normalized_zpos;
 	info.color_encoding = state->color_encoding;
 	info.color_range = state->color_range;
 
@@ -273,7 +273,7 @@ static int omap_plane_atomic_set_property(struct drm_plane *plane,
 					  uint64_t val)
 {
 	struct omap_drm_private *priv = plane->dev->dev_private;
-	struct omap_plane_state *omap_state = to_omap_plane_state(plane->state);
+	struct omap_plane_state *omap_state = to_omap_plane_state(state);
 
 	if (property == priv->zorder_prop)
 		state->zpos = val;
@@ -293,8 +293,7 @@ static int omap_plane_atomic_get_property(struct drm_plane *plane,
 					  uint64_t *val)
 {
 	struct omap_drm_private *priv = plane->dev->dev_private;
-	const struct omap_plane_state *omap_state =
-		to_omap_plane_state(plane->state);
+	const struct omap_plane_state *omap_state = to_omap_plane_state(state);
 
 	if (property == priv->zorder_prop)
 		*val = state->zpos;

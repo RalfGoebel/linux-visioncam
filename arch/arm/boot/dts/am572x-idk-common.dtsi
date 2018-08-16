@@ -95,10 +95,6 @@
 	};
 };
 
-&omap_dwc3_2 {
-	extcon = <&extcon_usb2>;
-};
-
 &extcon_usb2 {
 	id-gpio = <&gpio3 16 GPIO_ACTIVE_HIGH>;
 	vbus-gpio = <&gpio3 26 GPIO_ACTIVE_HIGH>;
@@ -115,6 +111,23 @@
 
 &pcie1_ep {
 	gpios = <&gpio3 23 GPIO_ACTIVE_HIGH>;
+};
+
+&ov2659_1 {
+	remote-endpoint = <&vin4b>;
+};
+
+&vin4b {
+	status = "okay";
+
+	endpoint@3 {
+		slave-mode;
+		remote-endpoint = <&ov2659_1>;
+	};
+};
+
+&vip2 {
+	status = "okay";
 };
 
 &ipu2 {
