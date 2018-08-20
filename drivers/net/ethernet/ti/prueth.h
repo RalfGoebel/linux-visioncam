@@ -373,7 +373,7 @@ enum pruss_ethtype {
 /* A group of PCPs are mapped to a Queue. This is the size of firmware
  * array in shared memory
  */
-#define PCP_GROUP_TO_QUEUE_MAP_SIZE	8
+#define PCP_GROUP_TO_QUEUE_MAP_SIZE	4
 
 /* In switch mode there are 3 real ports i.e. 3 mac addrs.
  * however Linux sees only the host side port. The other 2 ports
