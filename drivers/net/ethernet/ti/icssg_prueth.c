@@ -1405,7 +1405,8 @@ static int prueth_probe(struct platform_device *pdev)
 	}
 
 	pruss = pruss_get(eth0_node ?
-			  prueth->pru[ICSS_SLICE0] : prueth->pru[ICSS_SLICE1]);
+			  prueth->pru[ICSS_SLICE0] : prueth->pru[ICSS_SLICE1],
+			  &prueth->pruss_id);
 	if (IS_ERR(pruss)) {
 		ret = PTR_ERR(pruss);
 		dev_err(dev, "unable to get pruss handle\n");
