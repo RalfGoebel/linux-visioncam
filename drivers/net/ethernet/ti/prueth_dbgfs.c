@@ -788,6 +788,8 @@ int prueth_hsr_prp_debugfs_init(struct prueth *prueth)
 	char dir[32];
 
 	memset(dir, 0, sizeof(dir));
+	if (prueth->fw_data->driver_data == PRUSS_AM3359)
+		id = 1;
 	if (prueth->fw_data->driver_data == PRUSS_AM57XX)
 		id -= 1;
 
