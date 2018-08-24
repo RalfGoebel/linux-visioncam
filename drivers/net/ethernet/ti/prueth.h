@@ -289,9 +289,6 @@ struct prueth_hsr_prp_node {
 
 #define OCMC_RAM_SIZE		(SZ_64K - SZ_8K)
 
-/* Pn_COL_BUFFER_OFFSET @ 0xEE00 0xF400 0xFA00 */
-#define OCMC_RAM_SIZE_SWITCH	(SZ_64K)
-
 /* TX Minimum Inter packet gap */
 #define TX_MIN_IPG		0xb8
 
