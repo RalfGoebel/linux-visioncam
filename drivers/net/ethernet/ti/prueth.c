@@ -1845,7 +1845,7 @@ static int emac_rx_packet(struct prueth_emac *emac, u16 *bd_rd_ptr,
 		memcpy(dst_addr, src_addr, actual_pkt_len);
 	}
 
-	if (PRUETH_HAS_RED(prueth) && !pkt_info.lookup_success) {
+	if (PRUETH_HAS_RED(prueth)) {
 		if (PRUETH_HAS_PRP(prueth) && !emac->prp_emac_mode) {
 			memcpy(macid,
 			       ((pkt_info.sv_frame) ? nt_dst_addr + 20 :
