@@ -520,7 +520,10 @@ struct prueth_emac {
 #ifdef	CONFIG_DEBUG_FS
 	struct dentry *root_dir;
 	struct dentry *stats_file;
-	struct dentry *prp_emac_mode_file;
+#endif
+#ifdef CONFIG_SYSFS
+	struct device_attribute nsp_credit_attr;
+	struct device_attribute prp_emac_mode_attr;
 #endif
 	int ptp_tx_enable;
 	int ptp_rx_enable;
@@ -647,6 +650,16 @@ struct prueth {
 	spinlock_t	nt_lock;
 };
 
+#ifdef CONFIG_SYSFS
 int prueth_sysfs_init(struct prueth_emac *emac);
 void prueth_remove_sysfs_entries(struct prueth_emac *emac);
+#else
+static inline int prueth_sysfs_init(struct prueth_emac *emac)
+{
+	return 0;
+}
+
+static inline void prueth_remove_sysfs_entries(struct prueth_emac *emac)
+{}
+#endif
 #endif /* __NET_TI_PRUETH_H */
