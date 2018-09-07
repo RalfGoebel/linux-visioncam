@@ -382,6 +382,7 @@ static int hsr_prp_dev_xmit(struct sk_buff *skb, struct net_device *dev)
 	hsr_prp_forward_skb(skb, master);
 	master->dev->stats.tx_packets++;
 	master->dev->stats.tx_bytes += skb->len;
+	INC_CNT_RX_C(priv);
 
 	return NETDEV_TX_OK;
 }
@@ -513,8 +514,8 @@ static void hsr_prp_announce(unsigned long data)
 					       priv->prot_ver);
 		else /* PRP */
 			send_supervision_frame(master,
-					       (priv->dup_discard_mode ==
-						IEC62439_3_PRP_DD) ?
+					       (priv->dd_mode ==
+						IEC62439_3_DD) ?
 						PRP_TLV_LIFE_CHECK_DD :
 						PRP_TLV_LIFE_CHECK_DA,
 						priv->prot_ver);
@@ -845,7 +846,7 @@ int hsr_prp_dev_finalize(struct net_device *hsr_prp_dev,
 		 * mode set.
 		 */
 		priv->net_id = PRP_LAN_ID << 1;
-		priv->dup_discard_mode = IEC62439_3_PRP_DD;
+		priv->dd_mode = IEC62439_3_DD;
 	} else {
 		priv->hsr_mode = IEC62439_3_HSR_MODE_H;
 	}
