@@ -615,6 +615,7 @@ struct prueth {
 	unsigned int emac_configured;
 	unsigned int tbl_check_period;
 	unsigned int node_table_clear;
+	unsigned int node_table_clear_last_cmd;
 	unsigned int tbl_check_mask;
 	struct hrtimer tbl_check_timer;
 	struct prueth_mmap_port_cfg_basis mmap_port_cfg_basis[PRUETH_PORT_MAX];
