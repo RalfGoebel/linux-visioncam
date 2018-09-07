@@ -540,8 +540,8 @@ static void hsr_prp_dev_destroy(struct net_device *hsr_prp_dev)
 
 	priv = netdev_priv(hsr_prp_dev);
 
+	hsr_prp_remove_procfs(priv, hsr_prp_dev);
 	hsr_prp_debugfs_term(priv);
-
 	rtnl_lock();
 	hsr_prp_for_each_port(priv, port)
 		hsr_prp_del_port(port);
@@ -942,12 +942,18 @@ int hsr_prp_dev_finalize(struct net_device *hsr_prp_dev,
 			      slave[1]->dev_addr))
 		goto fail;
 
-	res = hsr_prp_debugfs_init(priv, hsr_prp_dev);
+	res = hsr_prp_create_procfs(priv, hsr_prp_dev);
 	if (res)
 		goto fail;
 
+	res = hsr_prp_debugfs_init(priv, hsr_prp_dev);
+	if (res)
+		goto fail_procfs;
+
 	return 0;
 
+fail_procfs:
+	hsr_prp_remove_procfs(priv, hsr_prp_dev);
 fail:
 	hsr_prp_for_each_port(priv, port)
 		hsr_prp_del_port(port);

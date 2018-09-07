@@ -4071,21 +4071,24 @@ static int emac_lredev_get_node_table(struct net_device *ndev,
 	struct bin_tbl_t *bin;
 	struct node_tbl_t *node;
 	int i, j = 0, updated;
+	unsigned long flags;
 
 	netdev_dbg(ndev, "%d:%s\n", __LINE__, __func__);
 
-	if (size < NODE_TBL_MAX_ENTRIES)
+	if (size < nt->nt_lre_cnt->lre_cnt)
 		netdev_warn(ndev,
 			    "actual table size %d is < required size %d\n",
-			    size, NODE_TBL_MAX_ENTRIES);
+			    size,  nt->nt_lre_cnt->lre_cnt);
 
-	for (i = 0; i < BIN_TBL_MAX_ENTRIES; i++) {
-		if (nt->bin_tbl[i].node_tbl_offset < NODE_TBL_MAX_ENTRIES) {
-			bin =  &nt->bin_tbl[i];
+	spin_lock_irqsave(&prueth->nt_lock, flags);
+	for (i = 0; i < nt->bin_array_max_entries; i++) {
+		if (nt->bin_array->bin_tbl[j].node_tbl_offset <
+		    nt->nt_array_max_entries) {
+			bin =  &nt->bin_array->bin_tbl[i];
 			if (WARN_ON(bin->node_tbl_offset >=
 				    NODE_TBL_MAX_ENTRIES))
 				continue;
-			node =  &nt->node_tbl[bin->node_tbl_offset];
+			node =  &nt->nt_array->node_tbl[bin->node_tbl_offset];
 
 			if (!(node->entry_state & 0x1))
 				continue;
@@ -4102,6 +4105,7 @@ static int emac_lredev_get_node_table(struct net_device *ndev,
 			}
 		}
 	}
+	spin_unlock_irqrestore(&prueth->nt_lock, flags);
 
 	return j;
 }

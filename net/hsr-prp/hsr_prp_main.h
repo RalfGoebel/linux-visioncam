@@ -246,10 +246,17 @@ struct hsr_prp_priv {
 	unsigned char		sup_multicast_addr[ETH_ALEN];
 #ifdef	CONFIG_DEBUG_FS
 	struct dentry *root_dir;
-	struct dentry *node_tbl_file;
 	struct dentry *stats_file;
-	struct dentry *hsr_mode_file;
-	struct dentry *dd_mode_file;
+#endif
+#ifdef	CONFIG_PROC_FS
+	struct proc_dir_entry *dir;
+	struct proc_dir_entry *hsr_mode_file;
+	struct proc_dir_entry *dd_mode_file;
+	struct proc_dir_entry *prp_tr_file;
+	struct proc_dir_entry *clear_nt_file;
+	struct proc_dir_entry *dlrmt_file;
+	struct proc_dir_entry *lre_stats_file;
+	struct proc_dir_entry *node_table_file;
 #endif
 };
 
@@ -349,6 +356,21 @@ static inline int hsr_prp_debugfs_init(struct hsr_prp_priv *priv,
 }
 
 static inline void hsr_prp_debugfs_term(struct hsr_prp_priv *priv)
+{}
+#endif
+
+#ifdef	CONFIG_PROC_FS
+int hsr_prp_create_procfs(struct hsr_prp_priv *priv, struct net_device *ndev);
+void hsr_prp_remove_procfs(struct hsr_prp_priv *priv, struct net_device *ndev);
+#else
+static inline int hsr_prp_create_procfs(struct hsr_prp_priv *priv,
+					struct net_device *ndev)
+{
+	return 0;
+}
+
+static inline void hsr_prp_remove_procfs(struct hsr_prp_priv *priv,
+					 struct net_device *ndev)
 {}
 #endif
 
