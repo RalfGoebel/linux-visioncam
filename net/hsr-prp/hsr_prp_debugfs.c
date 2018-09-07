@@ -277,14 +277,7 @@ int hsr_prp_debugfs_init(struct hsr_prp_priv *priv,
 	int rc = -1;
 	struct dentry *de = NULL;
 
-#ifdef TODO
 	de = debugfs_create_dir(hsr_prp_dev->name, NULL);
-#else
-	if (priv->prot_ver <= HSR_V1)
-		de = debugfs_create_dir("hsr", NULL);
-	else
-		de = debugfs_create_dir("prp", NULL);
-#endif
 	if (!de) {
 		netdev_err(hsr_prp_dev, "Cannot create hsr-prp debugfs root\n");
 		return rc;
