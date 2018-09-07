@@ -772,6 +772,33 @@ static const struct file_operations prueth_error_stats_fops = {
 	.release = single_release,
 };
 
+/* prueth_hsr_prp_debugfs_term - Tear down debugfs intrastructure
+ *
+ * Description:
+ * When Debufs is configured this routine removes debugfs file system
+ * elements that are specific to hsr-prp
+ */
+void
+prueth_hsr_prp_debugfs_term(struct prueth *prueth)
+{
+	if (prueth->emac_configured)
+		return;
+
+	debugfs_remove_recursive(prueth->root_dir);
+	prueth->node_tbl_file = NULL;
+	prueth->nt_clear_file = NULL;
+	prueth->mc_filter_file = NULL;
+	prueth->vlan_filter_file = NULL;
+	prueth->hsr_mode_file = NULL;
+	prueth->dlrmt_file = NULL;
+	prueth->dd_file = NULL;
+	prueth->tr_file = NULL;
+	prueth->error_stats_file = NULL;
+	prueth->root_dir = NULL;
+	prueth->nt_index = NULL;
+	prueth->nt_bins = NULL;
+}
+
 /* prueth_hsr_prp_debugfs_init - create hsr-prp node_table file for dumping
  * the node table
  *
@@ -782,27 +809,16 @@ static const struct file_operations prueth_error_stats_fops = {
 int prueth_hsr_prp_debugfs_init(struct prueth *prueth)
 {
 	struct device *dev = prueth->dev;
-	int rc = -1;
+	int rc = -ENODEV;
 	struct dentry *de = NULL;
 	int id = prueth->pruss_id;
 	char dir[32];
 
 	memset(dir, 0, sizeof(dir));
-	if (prueth->fw_data->driver_data == PRUSS_AM3359)
-		id = 1;
-	if (prueth->fw_data->driver_data == PRUSS_AM57XX)
-		id -= 1;
-
-	if (PRUETH_HAS_HSR(prueth)) {
-		if (id == 1)
-			sprintf(dir, "prueth-hsr");
-		else
-			sprintf(dir, "prueth-hsr%d", id);
-	} else if (PRUETH_HAS_PRP(prueth)) {
-		if (id == 1)
-			sprintf(dir, "prueth-prp");
-		else
-			sprintf(dir, "prueth-prp%d", id);
+	if (PRUETH_HAS_HSR(prueth))
+		sprintf(dir, "prueth-hsr-%d", id);
+	else if (PRUETH_HAS_PRP(prueth)) {
+		sprintf(dir, "prueth-prp-%d", id);
 	} else {
 		dev_err(dev, "unknown eth_type: %u\n", prueth->eth_type);
 		return -EINVAL;
@@ -821,7 +837,7 @@ int prueth_hsr_prp_debugfs_init(struct prueth *prueth)
 				 &prueth_hsr_prp_node_table_fops);
 	if (!de) {
 		dev_err(dev, "Cannot create hsr-prp node_table file\n");
-		return rc;
+		goto error;
 	}
 	prueth->node_tbl_file = de;
 
@@ -830,7 +846,7 @@ int prueth_hsr_prp_debugfs_init(struct prueth *prueth)
 				 &prueth_hsr_prp_mc_filter_fops);
 	if (!de) {
 		dev_err(dev, "Cannot create hsr-prp mc_filter file\n");
-		return rc;
+		goto error;
 	}
 	prueth->mc_filter_file = de;
 
@@ -839,7 +855,7 @@ int prueth_hsr_prp_debugfs_init(struct prueth *prueth)
 				 &prueth_hsr_prp_vlan_filter_fops);
 	if (!de) {
 		dev_err(dev, "Cannot create hsr-prp vlan_filter file\n");
-		return rc;
+		goto error;
 	}
 	prueth->vlan_filter_file = de;
 
@@ -848,7 +864,7 @@ int prueth_hsr_prp_debugfs_init(struct prueth *prueth)
 				 &prueth_hsr_prp_nt_clear_fops);
 	if (!de) {
 		dev_err(dev, "Cannot create hsr-prp node table clear file\n");
-		return rc;
+		goto error;
 	}
 	prueth->nt_clear_file = de;
 
@@ -858,7 +874,7 @@ int prueth_hsr_prp_debugfs_init(struct prueth *prueth)
 					 &prueth_hsr_mode_fops);
 		if (!de) {
 			dev_err(dev, "Cannot create hsr mode file\n");
-			return rc;
+			goto error;
 		}
 		prueth->hsr_mode_file = de;
 	}
@@ -868,7 +884,7 @@ int prueth_hsr_prp_debugfs_init(struct prueth *prueth)
 				 &prueth_hsr_prp_dlrmt_fops);
 	if (!de) {
 		dev_err(dev, "Cannot create dup_list_reside_max_time file\n");
-		return rc;
+		goto error;
 	}
 	prueth->dlrmt_file = de;
 
@@ -877,7 +893,7 @@ int prueth_hsr_prp_debugfs_init(struct prueth *prueth)
 				 &prueth_hsr_prp_dd_fops);
 	if (!de) {
 		dev_err(dev, "Cannot create duplicate_discard file\n");
-		return rc;
+		goto error;
 	}
 	prueth->dd_file = de;
 
@@ -888,7 +904,7 @@ int prueth_hsr_prp_debugfs_init(struct prueth *prueth)
 
 		if (!de) {
 			dev_err(dev, "Cannot create duplicate_discard file\n");
-			return rc;
+			goto error;
 		}
 		prueth->tr_file = de;
 	}
@@ -897,7 +913,7 @@ int prueth_hsr_prp_debugfs_init(struct prueth *prueth)
 				 &prueth_error_stats_fops);
 	if (!de) {
 		dev_err(dev, "Cannot create error_stats file\n");
-		return rc;
+		goto error;
 	}
 	prueth->error_stats_file = de;
 
@@ -906,7 +922,7 @@ int prueth_hsr_prp_debugfs_init(struct prueth *prueth)
 				 &prueth_nt_index_fops);
 	if (!de) {
 		dev_err(dev, "Cannot create nt_index file\n");
-		return rc;
+		goto error;
 	}
 	prueth->nt_index = de;
 
@@ -915,11 +931,15 @@ int prueth_hsr_prp_debugfs_init(struct prueth *prueth)
 				 &prueth_nt_bins_fops);
 	if (!de) {
 		dev_err(dev, "Cannot create nt_indexes file\n");
-		return rc;
+		goto error;
 	}
 	prueth->nt_bins = de;
 
 	return 0;
+error:
+	prueth_hsr_prp_debugfs_term(prueth);
+	return rc;
+
 }
 
 /* prueth_debugfs_term - Tear down debugfs intrastructure for emac stats
@@ -937,34 +957,4 @@ prueth_debugfs_term(struct prueth_emac *emac)
 	emac->root_dir = NULL;
 }
 
-/* prueth_hsr_prp_debugfs_term - Tear down debugfs intrastructure
- *
- * Description:
- * When Debufs is configured this routine removes debugfs file system
- * elements that are specific to hsr-prp
- */
-void
-prueth_hsr_prp_debugfs_term(struct prueth *prueth)
-{
-	/* Only case when this will return without doing anything
-	 * happens if this is called from emac_ndo_open for the
-	 * second device
-	 */
-	if (prueth->emac_configured)
-		return;
-
-	debugfs_remove_recursive(prueth->root_dir);
-	prueth->node_tbl_file = NULL;
-	prueth->nt_clear_file = NULL;
-	prueth->mc_filter_file = NULL;
-	prueth->vlan_filter_file = NULL;
-	prueth->hsr_mode_file = NULL;
-	prueth->dlrmt_file = NULL;
-	prueth->dd_file = NULL;
-	prueth->tr_file = NULL;
-	prueth->error_stats_file = NULL;
-	prueth->root_dir = NULL;
-	prueth->nt_index = NULL;
-	prueth->nt_bins = NULL;
-}
 #endif
