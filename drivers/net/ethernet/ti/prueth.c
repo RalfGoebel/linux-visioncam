@@ -4082,11 +4082,11 @@ static int emac_lredev_get_node_table(struct net_device *ndev,
 
 	spin_lock_irqsave(&prueth->nt_lock, flags);
 	for (i = 0; i < nt->bin_array_max_entries; i++) {
-		if (nt->bin_array->bin_tbl[j].node_tbl_offset <
+		if (nt->bin_array->bin_tbl[i].node_tbl_offset <
 		    nt->nt_array_max_entries) {
 			bin =  &nt->bin_array->bin_tbl[i];
 			if (WARN_ON(bin->node_tbl_offset >=
-				    NODE_TBL_MAX_ENTRIES))
+					nt->nt_array_max_entries))
 				continue;
 			node =  &nt->nt_array->node_tbl[bin->node_tbl_offset];
 
