@@ -266,7 +266,7 @@ struct hsr_prp_priv {
 	unsigned char		sup_multicast_addr[ETH_ALEN];
 #ifdef	CONFIG_DEBUG_FS
 	struct dentry *root_dir;
-	struct dentry *stats_file;
+	struct dentry *lre_info_file;
 #endif
 #ifdef	CONFIG_PROC_FS
 	struct proc_dir_entry *dir;
