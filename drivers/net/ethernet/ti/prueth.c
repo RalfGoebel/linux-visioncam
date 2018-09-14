@@ -4110,11 +4110,23 @@ static int emac_lredev_get_stats(struct net_device *ndev,
 	return 0;
 }
 
+static int emac_lredev_set_sv_vlan_id(struct net_device *ndev,
+				      u16 vid)
+{
+	struct prueth_emac *emac = netdev_priv(ndev);
+	struct prueth *prueth = emac->prueth;
+
+	if (!PRUETH_HAS_RED(prueth))
+		return 0;
+
+	return emac_add_del_vid(emac, true, htons(ETH_P_8021Q), vid);
+}
 static const struct lredev_ops emac_lredev_ops = {
 	.lredev_attr_get = emac_lredev_attr_get,
 	.lredev_attr_set = emac_lredev_attr_set,
 	.lredev_get_node_table = emac_lredev_get_node_table,
 	.lredev_get_stats = emac_lredev_get_stats,
+	.lredev_set_sv_vlan_id = emac_lredev_set_sv_vlan_id,
 };
 
 static int prueth_netdev_init(struct prueth *prueth,
