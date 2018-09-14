@@ -150,6 +150,9 @@ const struct prueth_fw_offsets fw_offsets_v2_1 = {
 /* ECAP has 200Mhz clock. So each tick is 5 nsec. i.e 1000/200 */
 #define ECAP_TICK_NSEC                  5
 
+#define PRUETH_ETH_TYPE_OFFSET           12
+#define PRUETH_ETH_TYPE_UPPER_SHIFT      8
+
 static int prueth_ecap_initialization(struct prueth *prueth,
 				      u32 new_timeout_val,
 				      u32 use_adaptive,
@@ -1718,7 +1721,8 @@ static int emac_rx_packet(struct prueth_emac *emac, u16 *bd_rd_ptr,
 	/* OCMC RAM is not cached and read order is not important */
 	void *ocmc_ram = (__force void *)emac->prueth->mem[PRUETH_MEM_OCMC].va;
 	unsigned int actual_pkt_len;
-	u16 start_offset = 0;
+	u16 start_offset = 0, type;
+	u8 offset = 0, *ptr;
 
 	if (PRUETH_HAS_HSR(prueth))
 		start_offset = (pkt_info.start_offset ? HSR_TAG_SIZE : 0);
@@ -1801,10 +1805,22 @@ static int emac_rx_packet(struct prueth_emac *emac, u16 *bd_rd_ptr,
 		memcpy(dst_addr, src_addr, actual_pkt_len);
 	}
 
+	/* Check if VLAN tag is present since SV payload location will change
+	 * based on that
+	 */
+	if (PRUETH_HAS_RED(prueth)) {
+		ptr = nt_dst_addr + PRUETH_ETH_TYPE_OFFSET;
+		type = (*ptr++) << PRUETH_ETH_TYPE_UPPER_SHIFT;
+		type |= *ptr++;
+		if (type == ETH_P_8021Q)
+			offset = 4;
+	}
+
 	if (PRUETH_HAS_RED(prueth)) {
 		if (PRUETH_HAS_PRP(prueth) && !emac->prp_emac_mode) {
 			memcpy(macid,
-			       ((pkt_info.sv_frame) ? nt_dst_addr + 20 :
+			       ((pkt_info.sv_frame) ?
+				nt_dst_addr + 20 + offset :
 				nt_dst_addr + 6),
 			       6);
 
@@ -1813,7 +1829,7 @@ static int emac_rx_packet(struct prueth_emac *emac, u16 *bd_rd_ptr,
 					  &prueth->nt_lock);
 
 		} else if (pkt_info.sv_frame) {
-			memcpy(macid, nt_dst_addr + 20, 6);
+			memcpy(macid, nt_dst_addr + 20 + offset, 6);
 			node_table_insert(prueth, macid, emac->port_id,
 					  pkt_info.sv_frame, RED_PROTO_HSR,
 					  &prueth->nt_lock);
