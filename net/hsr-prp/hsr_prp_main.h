@@ -251,6 +251,8 @@ struct hsr_prp_priv {
 	u16 sv_frame_vid;
 	u8 sv_frame_cfi;
 	u8 sv_frame_pcp;
+	/* To enable/disable SV frame transmission */
+	u8 disable_sv_frame;
 	/* value of hsr mode */
 	enum iec62439_3_hsr_modes hsr_mode;
 	/* PRP Transparent Reception */
@@ -275,6 +277,7 @@ struct hsr_prp_priv {
 	struct proc_dir_entry *dlrmt_file;
 	struct proc_dir_entry *lre_stats_file;
 	struct proc_dir_entry *node_table_file;
+	struct proc_dir_entry *disable_sv_file;
 #endif
 };
 
