@@ -63,25 +63,13 @@ static int pruss0_ethtype = PRUSS_ETHTYPE_EMAC;
 module_param(pruss0_ethtype, int, 0444);
 MODULE_PARM_DESC(pruss0_ethtype, "Choose PRUSS0 eth-type firmware");
 
-static int pruss0_hsr_mode = MODEH;
-module_param(pruss0_hsr_mode, int, 0444);
-MODULE_PARM_DESC(pruss0_hsr_mode, "Choose PRUSS0 HSR mode");
-
 static int pruss1_ethtype = PRUSS_ETHTYPE_EMAC;
 module_param(pruss1_ethtype, int, 0444);
 MODULE_PARM_DESC(pruss1_ethtype, "Choose PRUSS1 eth-type firmware");
 
-static int pruss1_hsr_mode = MODEH;
-module_param(pruss1_hsr_mode, int, 0444);
-MODULE_PARM_DESC(pruss1_hsr_mode, "Choose PRUSS1 HSR mode");
-
 static int pruss2_ethtype = PRUSS_ETHTYPE_EMAC;
 module_param(pruss2_ethtype, int, 0444);
 MODULE_PARM_DESC(pruss2_ethtype, "Choose PRUSS2 eth-type firmware");
-
-static int pruss2_hsr_mode = MODEH;
-module_param(pruss2_hsr_mode, int, 0444);
-MODULE_PARM_DESC(pruss2_hsr_mode, "Choose PRUSS2 HSR mode");
 
 #define PRUETH_DEFAULT_MC_MASK "FF:FF:FF:FF:FF:FF"
 static char *pruss0_mc_mask = PRUETH_DEFAULT_MC_MASK;
@@ -4311,7 +4299,7 @@ static int prueth_probe(struct platform_device *pdev)
 	struct device_node *eth0_node, *eth1_node;
 	const struct of_device_id *match;
 	struct pruss *pruss;
-	int pruss_id1, pruss_id2, ethtype1, ethtype2, hsr_mode1, hsr_mode2;
+	int pruss_id1, pruss_id2, ethtype1, ethtype2;
 	char *mc_mask1, *mc_mask2;
 	int i, ret;
 
@@ -4421,8 +4409,6 @@ static int prueth_probe(struct platform_device *pdev)
 		pruss_id2 = PRUSS2;
 		ethtype1 = pruss1_ethtype;
 		ethtype2 = pruss2_ethtype;
-		hsr_mode1 = pruss1_hsr_mode;
-		hsr_mode2 = pruss2_hsr_mode;
 		mc_mask1 = pruss1_mc_mask;
 		mc_mask2 = pruss2_mc_mask;
 	} else {
@@ -4430,22 +4416,16 @@ static int prueth_probe(struct platform_device *pdev)
 		pruss_id2 = PRUSS1;
 		ethtype1 = pruss0_ethtype;
 		ethtype2 = pruss1_ethtype;
-		hsr_mode1 = pruss0_hsr_mode;
-		hsr_mode2 = pruss1_hsr_mode;
 		mc_mask1 = pruss0_mc_mask;
 		mc_mask2 = pruss1_mc_mask;
 	}
 
 	if (prueth->pruss_id == pruss_id1) {
 		prueth->eth_type = ethtype1;
-		if (PRUETH_HAS_HSR(prueth))
-			prueth->hsr_mode = hsr_mode1;
 		if (PRUETH_HAS_RED(prueth))
 			prueth_get_mc_mac_mask(prueth, mc_mask1);
 	} else {
 		prueth->eth_type = ethtype2;
-		if (PRUETH_HAS_HSR(prueth))
-			prueth->hsr_mode = hsr_mode2;
 		if (PRUETH_HAS_RED(prueth))
 			prueth_get_mc_mac_mask(prueth, mc_mask2);
 	}
