@@ -243,6 +243,27 @@ int hsr_prp_lredev_get_node_table(struct hsr_prp_priv *priv,
 	return ret;
 }
 
+static int hsr_prp_set_sv_frame_vid(struct hsr_prp_priv *priv,
+				    u16 vid)
+{
+	struct hsr_prp_port *port_a =
+		hsr_prp_get_port(priv, HSR_PRP_PT_SLAVE_A);
+	struct net_device *slave_a_dev;
+	int ret = -EINVAL;
+
+	if (!port_a)
+		return ret;
+
+	slave_a_dev = port_a->dev;
+
+	/* TODO can we use vlan_vid_add() here?? */
+	if (slave_a_dev && slave_a_dev->lredev_ops &&
+	    slave_a_dev->lredev_ops->lredev_set_sv_vlan_id)
+		slave_a_dev->lredev_ops->lredev_set_sv_vlan_id(slave_a_dev,
+							       vid);
+	return 0;
+}
+
 int hsr_prp_lredev_get_lre_stats(struct hsr_prp_priv *priv,
 				 struct lre_stats *stats)
 {
@@ -988,6 +1009,12 @@ int hsr_prp_dev_finalize(struct net_device *hsr_prp_dev,
 		goto fail;
 
 	res = hsr_prp_debugfs_init(priv, hsr_prp_dev);
+	if (res)
+		goto fail_procfs;
+
+	if (priv->use_vlan_for_sv)
+		res = hsr_prp_set_sv_frame_vid(priv, priv->sv_frame_vid);
+
 	if (res)
 		goto fail_procfs;
 
