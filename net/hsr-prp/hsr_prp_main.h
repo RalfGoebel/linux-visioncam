@@ -233,6 +233,11 @@ struct hsr_prp_priv {
 	u8 net_id;		/* for PRP, it occupies most significant 3 bits
 				 * of lan_id
 				 */
+	/* Below are used when SV frames are to be sent with VLAN tag */
+	u8 use_vlan_for_sv;
+	u16 sv_frame_vid;
+	u8 sv_frame_cfi;
+	u8 sv_frame_pcp;
 	/* value of hsr mode */
 	enum iec62439_3_hsr_modes hsr_mode;
 	/* PRP Transparent Reception */
