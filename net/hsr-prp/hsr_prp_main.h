@@ -150,8 +150,21 @@ struct hsrv0_ethhdr_sp {
 	struct hsr_prp_sup_tag	hsr_sup;
 } __packed;
 
+struct hsrv0_ethhdr_vlan_sp {
+	struct ethhdr		ethhdr;
+	struct vlan_hdr		vlanHdr;
+	struct hsr_prp_sup_tag	hsr_sup;
+} __packed;
+
 struct hsrv1_ethhdr_sp {
 	struct ethhdr		ethhdr;
+	struct hsr_tag		hsr;
+	struct hsr_prp_sup_tag	hsr_sup;
+} __packed;
+
+struct hsrv1_ethhdr_vlan_sp {
+	struct ethhdr		ethhdr;
+	struct vlan_hdr		vlanHdr;
 	struct hsr_tag		hsr;
 	struct hsr_prp_sup_tag	hsr_sup;
 } __packed;
