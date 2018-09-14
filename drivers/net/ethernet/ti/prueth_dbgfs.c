@@ -26,8 +26,12 @@ prueth_queue_stats_show(struct seq_file *sfp, void *data)
 {
 	struct prueth_emac *emac = (struct prueth_emac *)sfp->private;
 
-	seq_printf(sfp,
-		   "   TxQ-0    TxQ-1    TxQ-2    TxQ-3    ");
+	if (!PRUETH_HAS_RED(emac->prueth))
+		seq_printf(sfp,
+			   "   TxQ-0    TxQ-1    TxQ-2    TxQ-3    ");
+	else
+		seq_printf(sfp,
+			   "   TxQ-2    TxQ-3    ");
 	if (emac->port_id == PRUETH_PORT_MII0)
 		seq_printf(sfp,
 			   "RxQ-0    RxQ-1\n");
@@ -37,13 +41,20 @@ prueth_queue_stats_show(struct seq_file *sfp, void *data)
 	seq_printf(sfp,
 		   "=====================================================\n");
 
-	seq_printf(sfp, "%8d %8d %8d %8d %8d %8d\n",
-		   emac->tx_packet_counts[PRUETH_QUEUE1],
-		   emac->tx_packet_counts[PRUETH_QUEUE2],
-		   emac->tx_packet_counts[PRUETH_QUEUE3],
-		   emac->tx_packet_counts[PRUETH_QUEUE4],
-		   emac->rx_packet_counts[PRUETH_QUEUE1],
-		   emac->rx_packet_counts[PRUETH_QUEUE2]);
+	if (!PRUETH_HAS_RED(emac->prueth))
+		seq_printf(sfp, "%8d %8d %8d %8d %8d %8d\n",
+			   emac->tx_packet_counts[PRUETH_QUEUE1],
+			   emac->tx_packet_counts[PRUETH_QUEUE2],
+			   emac->tx_packet_counts[PRUETH_QUEUE3],
+			   emac->tx_packet_counts[PRUETH_QUEUE4],
+			   emac->rx_packet_counts[PRUETH_QUEUE1],
+			   emac->rx_packet_counts[PRUETH_QUEUE2]);
+	else
+		seq_printf(sfp, "%8d %8d %8d %8d\n",
+			   emac->tx_packet_counts[PRUETH_QUEUE3],
+			   emac->tx_packet_counts[PRUETH_QUEUE4],
+			   emac->rx_packet_counts[PRUETH_QUEUE1],
+			   emac->rx_packet_counts[PRUETH_QUEUE2]);
 
 	return 0;
 }
