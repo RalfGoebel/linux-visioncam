@@ -265,7 +265,7 @@
 	};
 
 	at24@50 {
-		compatible = "at24,24c512";
+		compatible = "at24,24c128";
 		pagesize = <64>;
 		reg = <0x50>;
 	};
