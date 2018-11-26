@@ -7,9 +7,10 @@
  */
 /dts-v1/;
 
-#include "dra74x.dtsi"
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/interrupt-controller/irq.h>
+#include "dra74x.dtsi"
+#include "dra74-ipu-dsp-common.dtsi"
 
 / {
 	model = "IMAGO VisionCam XM";
@@ -33,28 +34,28 @@
 		#size-cells = <2>;
 		ranges;
 
-		ipu2_cma_pool: ipu2_cma@95800000 {
+		ipu2_memory_region: ipu2-memory@95800000 {
 			compatible = "shared-dma-pool";
 			reg = <0x0 0x95800000 0x0 0x3800000>;
 			reusable;
 			status = "okay";
 		};
 
-		dsp1_cma_pool: dsp1_cma@99000000 {
+		dsp1_memory_region: dsp1-memory@99000000 {
 			compatible = "shared-dma-pool";
 			reg = <0x0 0x99000000 0x0 0x4000000>;
 			reusable;
 			status = "okay";
 		};
 
-		ipu1_cma_pool: ipu1_cma@9d000000 {
+		ipu1_memory_region: ipu1-memory@9d000000 {
 			compatible = "shared-dma-pool";
 			reg = <0x0 0x9d000000 0x0 0x2000000>;
 			reusable;
 			status = "okay";
 		};
 
-		dsp2_cma_pool: dsp2_cma@9f000000 {
+		dsp2_memory_region: dsp2-memory@9f000000 {
 			compatible = "shared-dma-pool";
 			reg = <0x0 0x9f000000 0x0 0x800000>;
 			reusable;
@@ -708,31 +709,22 @@
 
 &ipu2 {
 	status = "okay";
-	memory-region = <&ipu2_cma_pool>;
-	mboxes = <&mailbox6 &mbox_ipu2_ipc3x>;
-	timers = <&timer3>;
-	watchdog-timers = <&timer4>, <&timer9>;
+	memory-region = <&ipu2_memory_region>;
 };
 
 &ipu1 {
 	status = "okay";
-	memory-region = <&ipu1_cma_pool>;
-	mboxes = <&mailbox5 &mbox_ipu1_ipc3x>;
-	timers = <&timer11>;
+	memory-region = <&ipu1_memory_region>;
 };
 
 &dsp1 {
 	status = "okay";
-	memory-region = <&dsp1_cma_pool>;
-	mboxes = <&mailbox5 &mbox_dsp1_ipc3x>;
-	timers = <&timer5>;
+	memory-region = <&dsp1_memory_region>;
 };
 
 &dsp2 {
 	status = "okay";
-	memory-region = <&dsp2_cma_pool>;
-	mboxes = <&mailbox6 &mbox_dsp2_ipc3x>;
-	timers = <&timer6>;
+	memory-region = <&dsp2_memory_region>;
 };
 
 /*&pruss1 {
@@ -764,44 +756,16 @@
 &pruss_soc_bus1 {
 	status = "okay";
 
-	pruss1: pruss@4b200000 {
+	pruss1: pruss@0 {
 		status = "okay";
-
-		pru1_0: pru@4b234000 {
-			interrupt-parent = <&pruss1_intc>;
-			interrupts = <16>, <17>;
-			interrupt-names = "vring", "kick";
-			status = "okay";
-		};
-
-		pru1_1: pru@4b238000 {
-			interrupt-parent = <&pruss1_intc>;
-			interrupts = <18>, <19>;
-			interrupt-names = "vring", "kick";
-			status = "okay";
-		};
 	};
 };
 
 &pruss_soc_bus2 {
 	status = "okay";
 
-	pruss2: pruss@4b280000 {
+	pruss2: pruss@0 {
 		status = "okay";
-
-		pru2_0: pru@4b2b4000 {
-			interrupt-parent = <&pruss2_intc>;
-			interrupts = <16>, <17>;
-			interrupt-names = "vring", "kick";
-			status = "okay";
-		};
-
-		pru2_1: pru@4b2b8000 {
-			interrupt-parent = <&pruss2_intc>;
-			interrupts = <18>, <19>;
-			interrupt-names = "vring", "kick";
-			status = "okay";
-		};
 	};
 };
 
@@ -823,19 +787,12 @@
 };
 
 
-/*&pcie1 {
-	num-lanes = <2>;
-	phys = <&pcie1_phy &pcie2_phy>;
-	phy-names = "pcie-phy0", "pcie-phy1";
-	gpio = <&gpio4 24 GPIO_ACTIVE_HIGH>;
-};*/
 &pcie1_rc {
 	status = "ok";
 	num-lanes = <2>;
 	phys = <&pcie1_phy &pcie2_phy>;
 	phy-names = "pcie-phy0", "pcie-phy1";
 	gpio = <&gpio4 24 GPIO_ACTIVE_HIGH>;
-//	gpios = <&gpio2 8 GPIO_ACTIVE_LOW>;
 };
 
 &pcie2_phy {
@@ -881,5 +838,5 @@
 				type = "critical";
 			};
 		};
-       };
+	};
 };
