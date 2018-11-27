@@ -126,16 +126,16 @@ void omap_iommu_restore_ctx(struct device *dev)
 }
 EXPORT_SYMBOL_GPL(omap_iommu_restore_ctx);
 
-static void dra7_cfg_dspsys_mmu(struct omap_iommu *obj, bool enable)
+static void dra7_cfg_sys_mmu(struct omap_iommu *obj, bool enable)
 {
 	u32 val, mask;
 
 	if (!obj->syscfg)
 		return;
 
-	mask = (1 << (obj->id * DSP_SYS_MMU_CONFIG_EN_SHIFT));
+	mask = obj->syscfg_field;
 	val = enable ? mask : 0;
-	regmap_update_bits(obj->syscfg, DSP_SYS_MMU_CONFIG, mask, val);
+	regmap_update_bits(obj->syscfg, obj->syscfg_reg, mask, val);
 }
 
 static void __iommu_set_twl(struct omap_iommu *obj, bool on)
@@ -173,7 +173,7 @@ static int omap2_iommu_enable(struct omap_iommu *obj)
 
 	iommu_write_reg(obj, pa, MMU_TTB);
 
-	dra7_cfg_dspsys_mmu(obj, true);
+	dra7_cfg_sys_mmu(obj, true);
 
 	if (obj->has_bus_err_back)
 		iommu_write_reg(obj, MMU_GP_REG_BUS_ERR_BACK_EN, MMU_GP_REG);
@@ -189,7 +189,7 @@ static void omap2_iommu_disable(struct omap_iommu *obj)
 
 	l &= ~MMU_CNTL_MASK;
 	iommu_write_reg(obj, l, MMU_CNTL);
-	dra7_cfg_dspsys_mmu(obj, false);
+	dra7_cfg_sys_mmu(obj, false);
 
 	dev_dbg(obj->dev, "%s is shutting down\n", obj->name);
 }
@@ -1124,18 +1124,24 @@ static bool omap_iommu_can_register(struct platform_device *pdev)
 	return false;
 }
 
-static int omap_iommu_dra7_get_dsp_system_cfg(struct platform_device *pdev,
-					      struct omap_iommu *obj)
+static int omap_iommu_dra7_get_system_cfg(struct platform_device *pdev,
+					  struct omap_iommu *obj)
 {
 	struct device_node *np = pdev->dev.of_node;
 	int ret;
+	int is_dsp_mmu = of_device_is_compatible(np, "ti,dra7-dsp-iommu");
+	u32 arg;
 
-	if (!of_device_is_compatible(np, "ti,dra7-dsp-iommu"))
+	if (!is_dsp_mmu && !of_device_is_compatible(np, "ti,dra7-iommu"))
 		return 0;
 
 	if (!of_property_read_bool(np, "ti,syscon-mmuconfig")) {
-		dev_err(&pdev->dev, "ti,syscon-mmuconfig property is missing\n");
-		return -EINVAL;
+		if (is_dsp_mmu) {
+			dev_err(&pdev->dev, "ti,syscon-mmuconfig property is missing\n");
+			return -EINVAL;
+		}
+		/* syscon property is not required for all IOMMUs */
+		return 0;
 	}
 
 	obj->syscfg =
@@ -1146,15 +1152,36 @@ static int omap_iommu_dra7_get_dsp_system_cfg(struct platform_device *pdev,
 		return ret;
 	}
 
-	if (of_property_read_u32_index(np, "ti,syscon-mmuconfig", 1,
-				       &obj->id)) {
-		dev_err(&pdev->dev, "couldn't get the IOMMU instance id within subsystem\n");
-		return -EINVAL;
-	}
+	ret = of_property_read_u32_index(np, "ti,syscon-mmuconfig", 1, &arg);
 
-	if (obj->id != 0 && obj->id != 1) {
-		dev_err(&pdev->dev, "invalid IOMMU instance id\n");
-		return -EINVAL;
+	if (is_dsp_mmu) {
+		/* argument is the IOMMU DSP instance ID */
+		if (ret) {
+			dev_err(&pdev->dev, "couldn't get the IOMMU instance id within subsystem\n");
+			return -EINVAL;
+		}
+
+		if (arg != 0 && arg != 1) {
+			dev_err(&pdev->dev, "invalid IOMMU DSP instance id\n");
+			return -EINVAL;
+		}
+
+		obj->syscfg_field = (1 << (arg * DSP_SYS_MMU_CONFIG_EN_SHIFT));
+		obj->syscfg_reg = DSP_SYS_MMU_CONFIG;
+	} else {
+		/* first argument is the register offset */
+		if (ret) {
+			dev_err(&pdev->dev, "couldn't get syscon register offset\n");
+			return -EINVAL;
+		}
+		obj->syscfg_reg = arg;
+
+		/* second argument is the bit field */
+		if (of_property_read_u32_index(np, "ti,syscon-mmuconfig", 2,
+					       &obj->syscfg_field)) {
+			dev_err(&pdev->dev, "couldn't get syscon register bit field\n");
+			return -EINVAL;
+		}
 	}
 
 	return 0;
@@ -1215,7 +1242,7 @@ static int omap_iommu_probe(struct platform_device *pdev)
 	if (IS_ERR(obj->regbase))
 		return PTR_ERR(obj->regbase);
 
-	err = omap_iommu_dra7_get_dsp_system_cfg(pdev, obj);
+	err = omap_iommu_dra7_get_system_cfg(pdev, obj);
 	if (err)
 		return err;
 

@@ -80,7 +80,8 @@ struct omap_iommu {
 	u32 num_cr_ctx;
 
 	int has_bus_err_back;
-	u32 id;
+	u32 syscfg_reg;
+	u32 syscfg_field;
 
 	struct iommu_device iommu;
 	struct iommu_group *group;
