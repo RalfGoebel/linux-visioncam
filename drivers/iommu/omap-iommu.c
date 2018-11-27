@@ -30,6 +30,7 @@
 #include <linux/of_platform.h>
 #include <linux/regmap.h>
 #include <linux/mfd/syscon.h>
+#include <linux/pci.h>
 
 #include <linux/platform_data/iommu-omap.h>
 
@@ -1267,6 +1268,8 @@ static int omap_iommu_probe(struct platform_device *pdev)
 			goto out_group;
 
 		iommu_device_set_ops(&obj->iommu, &omap_iommu_ops);
+		iommu_device_set_fwnode(&obj->iommu,
+					&pdev->dev.of_node->fwnode);
 
 		err = iommu_device_register(&obj->iommu);
 		if (err)
@@ -1501,10 +1504,17 @@ omap_iommu_attach_dev(struct iommu_domain *domain, struct device *dev)
 
 	spin_lock(&omap_domain->lock);
 
-	/* only a single client device can be attached to a domain */
 	if (omap_domain->dev) {
-		dev_err(dev, "iommu domain is already attached\n");
-		ret = -EBUSY;
+		if (dev_is_pci(dev)) {
+			/* copy mapping and dma_ops from existing device */
+			to_dma_iommu_mapping(dev) =
+					to_dma_iommu_mapping(omap_domain->dev);
+			dev->dma_ops = omap_domain->dev->dma_ops;
+		} else {
+			/* only a single client device can be attached */
+			dev_err(dev, "a device is already attached to the domain\n");
+			ret = -EBUSY;
+		}
 		goto out;
 	}
 
@@ -1679,6 +1689,28 @@ static int omap_iommu_add_device(struct device *dev)
 	int num_iommus, i;
 	int ret;
 
+	if (dev_is_pci(dev)) {
+		/* arch_data is allocated in omap_iommu_of_xlate */
+		arch_data = dev->archdata.iommu;
+		if (!arch_data)
+			return -ENODEV;
+		oiommu = arch_data->iommu_dev;
+
+		group = pci_device_group(dev);
+		if (IS_ERR(group))
+			return PTR_ERR(group);
+		ret = iommu_group_add_device(group, dev);
+		if (ret)
+			return ret;
+		iommu_group_put(group);
+
+		ret = iommu_device_link(&oiommu->iommu, dev);
+		if (ret)
+			return ret;
+
+		return 0;
+	}
+
 	/*
 	 * Allocate the archdata iommu structure for DT-based devices.
 	 *
@@ -1777,10 +1809,41 @@ static struct iommu_group *omap_iommu_device_group(struct device *dev)
 	struct omap_iommu_arch_data *arch_data = dev->archdata.iommu;
 	struct iommu_group *group = ERR_PTR(-EINVAL);
 
+	if (dev_is_pci(dev))
+		return pci_device_group(dev);
+
 	if (arch_data->iommu_dev)
 		group = arch_data->iommu_dev->group;
 
 	return group;
+}
+
+static int omap_iommu_of_xlate(struct device *dev, struct of_phandle_args *args)
+{
+	struct omap_iommu_arch_data *arch_data = dev->archdata.iommu;
+	struct platform_device *mmu_dev;
+	struct omap_iommu *oiommu;
+
+	if (!arch_data) {
+		mmu_dev = of_find_device_by_node(args->np);
+		if (!mmu_dev)
+			return -ENODEV;
+
+		arch_data = kcalloc(2, sizeof(*arch_data), GFP_KERNEL);
+		if (!arch_data)
+			return -ENOMEM;
+
+		oiommu = platform_get_drvdata(mmu_dev);
+		if (!oiommu) {
+			kfree(arch_data);
+			return -ENODEV;
+		}
+
+		arch_data->iommu_dev = oiommu;
+		dev->archdata.iommu = arch_data;
+	}
+
+	return iommu_fwspec_add_ids(dev, args->args, 1);
 }
 
 static const struct iommu_ops omap_iommu_ops = {
@@ -1795,6 +1858,7 @@ static const struct iommu_ops omap_iommu_ops = {
 	.add_device	= omap_iommu_add_device,
 	.remove_device	= omap_iommu_remove_device,
 	.device_group	= omap_iommu_device_group,
+	.of_xlate       = omap_iommu_of_xlate,
 	.pgsize_bitmap	= OMAP_IOMMU_PGSIZES,
 };
 
@@ -1827,6 +1891,10 @@ static int __init omap_iommu_init(void)
 	}
 
 	ret = bus_set_iommu(&platform_bus_type, &omap_iommu_ops);
+	if (ret)
+		goto fail_bus;
+
+	ret = bus_set_iommu(&pci_bus_type, &omap_iommu_ops);
 	if (ret)
 		goto fail_bus;
 

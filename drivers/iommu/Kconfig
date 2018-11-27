@@ -206,6 +206,7 @@ config OMAP_IOMMU
 	depends on ARM && MMU
 	depends on ARCH_OMAP2PLUS || COMPILE_TEST
 	select IOMMU_API
+	select ARM_DMA_USE_IOMMU
 	---help---
 	  The OMAP3 media platform drivers depend on iommu support,
 	  if you need them say Y here.
