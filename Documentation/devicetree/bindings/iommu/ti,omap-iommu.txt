@@ -20,13 +20,25 @@ Optional properties:
                     Should be either 8 or 32 (default: 32)
 - ti,iommu-bus-err-back : Indicates the IOMMU instance supports throwing
 		          back a bus error response on MMU faults.
-- ti,syscon-mmuconfig : Should be a pair of the phandle to the DSP_SYSTEM
-                        syscon node that contains the additional control
-                        register for enabling the MMU, and the MMU instance
-                        number (0-indexed) within the sub-system. This property
-                        is required for DSP IOMMU instances on DRA7xx SoCs. The
-                        instance number should be 0 for DSP MDMA MMUs and 1 for
-                        DSP EDMA MMUs.
+- ti,syscon-mmuconfig : Specifies an additional control register for enabling
+                        the MMU. The number of arguments depends on the type
+                        of MMU:
+    - DSP MMU:    The property contains two arguments and is required for DSP
+                  MMU instances on DRA7xx.
+                  The 1st argument should contain the phandle to the
+                  DSP_SYSTEM syscon node that contains the additional control
+                  register.
+                  The 2nd argument should contain the MMU instance number
+                  (0-indexed) within the sub-system. The instance number
+                  should be 0 for DSP MDMA MMUs and 1 for DSP EDMA MMUs.
+    - System MMU: The property contains three arguments and is required for
+                  DRA7xx system MMU1 (EDMA) and MMU2 (PCIe).
+                  The 1st argument should contain the phandle to the syscon
+                  node that contains the additional control register.
+                  The 2nd argument should contain the register offset within
+                  the syscon node.
+                  The 3rd argument should contain the bit field for enabling
+                  the MMU.
 
 Example:
 	/* OMAP3 ISP MMU */
@@ -56,4 +68,28 @@ Example:
 		ti,hwmods = "mmu1_dsp2";
 		#iommu-cells = <0>;
 		ti,syscon-mmuconfig = <&dsp2_system 0x1>;
+	};
+
+
+Example using the DRA74x PCIe MMU:
+	ocp {
+		dma-ranges;
+		axi@0 {
+			dma-ranges = <0x80000000 0x80000000 0x80000000>;
+		};
+		mmu2: mmu@4881e000 {
+			compatible = "ti,dra7-iommu";
+			reg = <0x4881e000 0x100>;
+			interrupts = <GIC_SPI 369 IRQ_TYPE_LEVEL_HIGH>;
+			/* syscon for MMU PCIe enable (PCIe_SS1: 0x100, PCIe_SS2: 0x200): */
+			ti,syscon-mmuconfig = <&scm_conf1 0x14 0x100>;
+			#iommu-cells = <0>;
+			ti,iommu-bus-err-back;
+			status = "okay";
+		};
+	};
+
+	&pcie1_rc {
+		status = "ok";
+		iommu-map = <0x0 &mmu2 0x0 0x10000>;
 	};
