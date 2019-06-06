@@ -127,6 +127,14 @@
 		>;
 	};
 
+	gpio1_pins: gpio1_pins {
+		pinctrl-single,pins = <
+			AM4372_IOPAD(0x80c, PIN_INPUT_PULLUP | MUX_MODE7) /* gpmc_ad3.gpio1_3 => reserved config */
+			AM4372_IOPAD(0x814, PIN_INPUT_PULLUP | MUX_MODE7) /* gpmc_ad5.gpio1_5 => reserved config */
+			AM4372_IOPAD(0x844, PIN_INPUT_PULLUP | MUX_MODE7) /* gpmc_a1.gpio1_17 => hardware revision */
+		>;
+	};
+
 	gpio2_pins: gpio2_pins {
 		pinctrl-single,pins = <
 			AM4372_IOPAD(0x8e4, PIN_OUTPUT | MUX_MODE7) /* dss_hsync.gpio2_23 => TrigMode */
@@ -150,6 +158,7 @@
 	gpio5_pins: gpio5_pins {
 		pinctrl-single,pins = <
 			AM4372_IOPAD(0xA28, PIN_INPUT | MUX_MODE7)			/* uart3_rxd.gpio5_2 => PHY interrupt */
+			AM4372_IOPAD(0xA50, PIN_OUTPUT | MUX_MODE7)			/* spi4_sclk.gpio5_4 => OUT3 */
 		>;
 	};
 
@@ -281,29 +290,30 @@
    "omap_gpio 481ac000.gpio: could not find pctldev for nod
    /ocp@44000000/l4_wkup@44c00000/scm@210000/pinmux@800/gpio2_pins, deferring probe"
    To avoid mixed up order of gpio groups, we setup pinmux later when
-   am43xx_pinmux gets loaded: */
- 
+   am43xx_pinmux gets loaded.
+   We don't include gpio1_pins to maintain the old gpio order within sysfs. */
+
 &am43xx_pinmux {
 	pinctrl-names = "default";
 	pinctrl-0 = <&gpio2_pins &gpio4_pins &gpio5_pins>;
 };
 
+&gpio1 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&gpio1_pins>;
+};
+
 &gpio2 {
 	status = "okay";
-//	pinctrl-names = "default";
-//	pinctrl-0 = <&gpio2_pins>;
 };
 
 &gpio4 {
 	status = "okay";
-//	pinctrl-names = "default";
-//	pinctrl-0 = <&gpio4_pins>;
 };
 
 &gpio5 {
 	status = "okay";
-//	pinctrl-names = "default";
-//	pinctrl-0 = <&gpio5_pins>;
 };
 
 &vpfe0 {
