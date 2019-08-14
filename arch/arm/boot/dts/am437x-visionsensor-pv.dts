@@ -30,7 +30,26 @@
 		regulator-max-microvolt = <3300000>;
 		enable-active-high;
 	};
-	
+
+	/* Enable direct access to gpio registers in users space by using the 'uio_pdrv_genirq'
+	   driver for controlling the digital I/Os. The UIO driver only allows 5 mappings for
+	   each device but we have 6 GPIO groups. Therefore, we combine two adjacent GPIO pairs: */
+	gpio_map@44e07000 {
+		compatible = "gpio-uio", "generic-uio";
+		reg = <0x44e07000 0x1000>,	// GPIO0
+		      <0x4804c000 0x1000>,	// GPIO1
+		      <0x481ac000 0x3000>,	// GPIO2 + GPIO3
+/*		      <0x481ae000 0x1000>,	// GPIO3*/
+		      <0x48320000 0x3000>;	// GPIO4 + GPIO5
+/*		      <0x48322000 0x1000>;	// GPIO5*/
+	};
+
+	/* Enable direct access to PRU memory in user space for support of input debouncing: */
+	pru_map@54440000 {
+		compatible = "pru-uio", "generic-uio";
+		reg = <0x54400000 0x80000>;
+	};
+
 /*	gpio_poweroff {
 		compatible = "gpio-poweroff";
 		gpios = <&tps65218_gpio 2 GPIO_ACTIVE_LOW>;
@@ -148,7 +167,7 @@
 			AM4372_IOPAD(0x9bc, PIN_OUTPUT_PULLUP | MUX_MODE7) /* cam0_wen.gpio4_3 => OUT2 */
 			AM4372_IOPAD(0x9ec, PIN_INPUT | MUX_MODE7) /* cam1_data1.gpio4_15 => IN0 */
 			AM4372_IOPAD(0x9f4, PIN_INPUT | MUX_MODE7) /* cam1_data3.gpio4_17 => IN1 */
-			AM4372_IOPAD(0x9d0, PIN_INPUT | MUX_MODE7) /* cam1_data8.gpio4_8 => IN2 */
+			AM4372_IOPAD(0x9d0, PIN_INPUT_PULLDOWN | MUX_MODE7) /* cam1_data8.gpio4_8 => IN2 */
 			AM4372_IOPAD(0x9e8, PIN_OUTPUT_PULLDOWN | MUX_MODE7) /* cam1_data0.gpio4_14 => TrigSW */
 			AM4372_IOPAD(0x9e0, PIN_OUTPUT_PULLDOWN | MUX_MODE7) /* cam1_field.gpio4_12 => StrobeEnable */
 		>;
@@ -291,7 +310,8 @@
    /ocp@44000000/l4_wkup@44c00000/scm@210000/pinmux@800/gpio2_pins, deferring probe"
    To avoid mixed up order of gpio groups, we setup pinmux later when
    am43xx_pinmux gets loaded.
-   We don't include gpio1_pins to maintain the old gpio order within sysfs. */
+   We don't include gpio1_pins to maintain the old gpio order within sysfs,
+   they get configured later. */
 
 &am43xx_pinmux {
 	pinctrl-names = "default";
