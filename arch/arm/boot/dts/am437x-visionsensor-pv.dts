@@ -364,27 +364,11 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pru_pins>;
 
-	pruss1: pruss@54400000 {
+	pruss1: pruss@0 {
 		status = "okay";
-
-		pru1_0: pru@54434000 {
-			status = "okay";
-		};
-
-		pru1_1: pru@54438000 {
-			status = "okay";
-		};
 	};
 
-	pruss0: pruss@54440000 {
+	pruss0: pruss@40000 {
 		status = "okay";
-
-		pru0_0: pru@54474000 {
-			status = "okay";
-		};
-
-		pru0_1: pru@54478000 {
-			status = "okay";
-		};
 	};
 };
