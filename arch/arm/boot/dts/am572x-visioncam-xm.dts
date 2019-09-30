@@ -75,6 +75,22 @@
 		};
 	};
 
+	ocp {
+		dma-ranges;
+		axi@0 {
+			dma-ranges = <0x80000000 0x80000000 0x80000000>;
+		};
+		mmu2: mmu@4881e000 {
+			compatible = "ti,dra7-iommu";
+			reg = <0x4881e000 0x100>;
+			interrupts = <GIC_SPI 369 IRQ_TYPE_LEVEL_HIGH>;
+			ti,syscon-mmuconfig = <&scm_conf1 0x14 0x100>;
+			#iommu-cells = <0>;
+			ti,iommu-bus-err-back;
+			status = "okay";
+		};
+	};
+
 	cmem {
 		compatible = "ti,cmem";
 		#address-cells = <1>;
@@ -793,6 +809,7 @@
 	phys = <&pcie1_phy &pcie2_phy>;
 	phy-names = "pcie-phy0", "pcie-phy1";
 	gpio = <&gpio4 24 GPIO_ACTIVE_HIGH>;
+	iommu-map = <0x0 &mmu2 0x0 0x10000>;
 };
 
 &pcie2_phy {
