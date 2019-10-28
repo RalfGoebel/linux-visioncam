@@ -88,6 +88,7 @@
 			ti,syscon-mmuconfig = <&scm_conf1 0x14 0x100>;
 			#iommu-cells = <0>;
 			ti,iommu-bus-err-back;
+			sram = <&ocmcram2>;
 			status = "okay";
 		};
 	};
@@ -668,18 +669,18 @@ pru2_1 {
 
 &thermal_zones {
 	board_thermal: board_thermal {
-		polling-delay-passive = <1250>; /* milliseconds */
-		polling-delay = <1500>; /* milliseconds */
+		polling-delay-passive = <1500>; /* milliseconds */
+		polling-delay = <3000>; /* milliseconds */
 
 				/* sensor       ID */
 		thermal-sensors = <&tmp102     0>;
 
-		board_trips: trips {
+/*		board_trips: trips {
 			board_crit: board_crit {
-				temperature = <80000>; /* millicelsius */
-				hysteresis = <0>; /* millicelsius */
+				temperature = <80000>;
+				hysteresis = <0>;
 				type = "critical";
 			};
-		};
+		};*/
 	};
 };
