@@ -14,6 +14,7 @@
 #define _OMAP_IOPGTABLE_H
 
 #include <linux/bitops.h>
+#include <linux/genalloc.h>
 
 /*
  * "L2 table" address mask and size definitions.
@@ -97,6 +98,17 @@ static inline phys_addr_t omap_iommu_translate(u32 d, u32 va, u32 mask)
 
 /* to find an entry in the second-level page table. */
 #define iopte_index(da)		(((da) >> IOPTE_SHIFT) & (PTRS_PER_IOPTE - 1))
-#define iopte_offset(iopgd, da)	(iopgd_page_vaddr(iopgd) + iopte_index(da))
+static inline u32 *get_iopte_offset(struct gen_pool *pool, u32 *iopgd, u32 da)
+{
+	if (pool) {
+		struct gen_pool_chunk *chunk = list_first_or_null_rcu(&pool->chunks, typeof(*chunk), next_chunk);
+		u32 *pt_base = (u32 *)(long)(iopgd_page_paddr(iopgd) - chunk->phys_addr + chunk->start_addr);
+		return pt_base + iopte_index(da);
+	} else {
+		return iopgd_page_vaddr(iopgd) + iopte_index(da);
+	}
+}
+#define iopte_offset(iopgd, da) get_iopte_offset(obj->sram_pool, iopgd, da)
+
 
 #endif /* _OMAP_IOPGTABLE_H */

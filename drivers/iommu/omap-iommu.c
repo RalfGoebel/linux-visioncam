@@ -164,7 +164,11 @@ static int omap2_iommu_enable(struct omap_iommu *obj)
 	if (!obj->iopgd || !IS_ALIGNED((u32)obj->iopgd,  SZ_16K))
 		return -EINVAL;
 
-	pa = virt_to_phys(obj->iopgd);
+	if (obj->sram_pool)
+		pa = gen_pool_virt_to_phys(obj->sram_pool, (unsigned long)obj->iopgd);
+	else
+		pa = virt_to_phys(obj->iopgd);
+
 	if (!IS_ALIGNED(pa, SZ_16K))
 		return -EINVAL;
 
@@ -477,13 +481,16 @@ static void iopte_free(struct omap_iommu *obj, u32 *iopte, bool dma_valid)
 
 	/* Note: freed iopte's must be clean ready for re-use */
 	if (iopte) {
-		if (dma_valid) {
-			pt_dma = virt_to_phys(iopte);
-			dma_unmap_single(obj->dev, pt_dma, IOPTE_TABLE_SIZE,
-					 DMA_TO_DEVICE);
+		if (obj->sram_pool) {
+			gen_pool_free(obj->sram_pool, (unsigned long)iopte, IOPTE_TABLE_SIZE);
+		} else {
+			if (dma_valid) {
+				pt_dma = virt_to_phys(iopte);
+				dma_unmap_single(obj->dev, pt_dma, IOPTE_TABLE_SIZE,
+						 DMA_TO_DEVICE);
+			}
+			kmem_cache_free(iopte_cachep, iopte);
 		}
-
-		kmem_cache_free(iopte_cachep, iopte);
 	}
 }
 
@@ -497,40 +504,53 @@ static u32 *iopte_alloc(struct omap_iommu *obj, u32 *iopgd,
 	if (*iopgd)
 		goto pte_ready;
 
-	/*
-	 * do the allocation outside the page table lock
-	 */
-	spin_unlock(&obj->page_table_lock);
-	iopte = kmem_cache_zalloc(iopte_cachep, GFP_KERNEL);
-	spin_lock(&obj->page_table_lock);
+	if (obj->sram_pool) {
+		struct genpool_data_align data_align = {.align = 1 << 10};
+		iopte = (u32 *)gen_pool_alloc_algo(obj->sram_pool,
+					IOPTE_TABLE_SIZE, gen_pool_first_fit_align, &data_align);
+	} else {
+		/*
+		 * do the allocation outside the page table lock
+		 */
+		spin_unlock(&obj->page_table_lock);
+		iopte = kmem_cache_zalloc(iopte_cachep, GFP_KERNEL);
+		spin_lock(&obj->page_table_lock);
+	}
 
 	if (!*iopgd) {
 		if (!iopte)
 			return ERR_PTR(-ENOMEM);
 
-		*pt_dma = dma_map_single(obj->dev, iopte, IOPTE_TABLE_SIZE,
+		if (obj->sram_pool) {
+			memset(iopte, 0, IOPTE_TABLE_SIZE);
+			*pt_dma = gen_pool_virt_to_phys(obj->sram_pool, (unsigned long)iopte);
+		} else {
+			*pt_dma = dma_map_single(obj->dev, iopte, IOPTE_TABLE_SIZE,
 					 DMA_TO_DEVICE);
-		if (dma_mapping_error(obj->dev, *pt_dma)) {
-			dev_err(obj->dev, "DMA map error for L2 table\n");
-			iopte_free(obj, iopte, false);
-			return ERR_PTR(-ENOMEM);
+			if (dma_mapping_error(obj->dev, *pt_dma)) {
+				dev_err(obj->dev, "DMA map error for L2 table\n");
+				iopte_free(obj, iopte, false);
+				return ERR_PTR(-ENOMEM);
+			}
+
+			/*
+			 * we rely on dma address and the physical address to be
+			 * the same for mapping the L2 table
+			 */
+			if (WARN_ON(*pt_dma != virt_to_phys(iopte))) {
+				dev_err(obj->dev, "DMA translation error for L2 table\n");
+				if (!obj->sram_pool)
+					dma_unmap_single(obj->dev, *pt_dma, IOPTE_TABLE_SIZE,
+							DMA_TO_DEVICE);
+				iopte_free(obj, iopte, false);
+				return ERR_PTR(-ENOMEM);
+			}
 		}
+		
+		*iopgd = *pt_dma | IOPGD_TABLE;
 
-		/*
-		 * we rely on dma address and the physical address to be
-		 * the same for mapping the L2 table
-		 */
-		if (WARN_ON(*pt_dma != virt_to_phys(iopte))) {
-			dev_err(obj->dev, "DMA translation error for L2 table\n");
-			dma_unmap_single(obj->dev, *pt_dma, IOPTE_TABLE_SIZE,
-					 DMA_TO_DEVICE);
-			iopte_free(obj, iopte, false);
-			return ERR_PTR(-ENOMEM);
-		}
-
-		*iopgd = virt_to_phys(iopte) | IOPGD_TABLE;
-
-		flush_iopte_range(obj->dev, obj->pd_dma, offset, 1);
+		if (!obj->sram_pool)
+			flush_iopte_range(obj->dev, obj->pd_dma, offset, 1);
 		dev_vdbg(obj->dev, "%s: a new pte:%p\n", __func__, iopte);
 	} else {
 		/* We raced, free the reduniovant table */
@@ -559,7 +579,8 @@ static int iopgd_alloc_section(struct omap_iommu *obj, u32 da, u32 pa, u32 prot)
 	}
 
 	*iopgd = (pa & IOSECTION_MASK) | prot | IOPGD_SECTION;
-	flush_iopte_range(obj->dev, obj->pd_dma, offset, 1);
+	if (!obj->sram_pool)
+		flush_iopte_range(obj->dev, obj->pd_dma, offset, 1);
 	return 0;
 }
 
@@ -577,7 +598,8 @@ static int iopgd_alloc_super(struct omap_iommu *obj, u32 da, u32 pa, u32 prot)
 
 	for (i = 0; i < 16; i++)
 		*(iopgd + i) = (pa & IOSUPER_MASK) | prot | IOPGD_SUPER;
-	flush_iopte_range(obj->dev, obj->pd_dma, offset, 16);
+	if (!obj->sram_pool)
+		flush_iopte_range(obj->dev, obj->pd_dma, offset, 16);
 	return 0;
 }
 
@@ -592,7 +614,8 @@ static int iopte_alloc_page(struct omap_iommu *obj, u32 da, u32 pa, u32 prot)
 		return PTR_ERR(iopte);
 
 	*iopte = (pa & IOPAGE_MASK) | prot | IOPTE_SMALL;
-	flush_iopte_range(obj->dev, pt_dma, offset, 1);
+	if (!obj->sram_pool)
+		flush_iopte_range(obj->dev, pt_dma, offset, 1);
 
 	dev_vdbg(obj->dev, "%s: da:%08x pa:%08x pte:%p *pte:%08x\n",
 		 __func__, da, pa, iopte, *iopte);
@@ -619,7 +642,8 @@ static int iopte_alloc_large(struct omap_iommu *obj, u32 da, u32 pa, u32 prot)
 
 	for (i = 0; i < 16; i++)
 		*(iopte + i) = (pa & IOLARGE_MASK) | prot | IOPTE_LARGE;
-	flush_iopte_range(obj->dev, pt_dma, offset, 16);
+	if (!obj->sram_pool)
+		flush_iopte_range(obj->dev, pt_dma, offset, 16);
 	return 0;
 }
 
@@ -728,7 +752,8 @@ static size_t iopgtable_clear_entry_core(struct omap_iommu *obj, u32 da)
 		bytes *= nent;
 		memset(iopte, 0, nent * sizeof(*iopte));
 		pt_dma = iopgd_page_paddr(iopgd);
-		flush_iopte_range(obj->dev, pt_dma, pt_offset, nent);
+		if (!obj->sram_pool)
+			flush_iopte_range(obj->dev, pt_dma, pt_offset, nent);
 
 		/*
 		 * do table walk to check if this table is necessary or not
@@ -750,7 +775,8 @@ static size_t iopgtable_clear_entry_core(struct omap_iommu *obj, u32 da)
 		bytes *= nent;
 	}
 	memset(iopgd, 0, nent * sizeof(*iopgd));
-	flush_iopte_range(obj->dev, obj->pd_dma, pd_offset, nent);
+	if (!obj->sram_pool)
+		flush_iopte_range(obj->dev, obj->pd_dma, pd_offset, nent);
 out:
 	return bytes;
 }
@@ -796,7 +822,8 @@ static void iopgtable_clear_entry_all(struct omap_iommu *obj)
 			iopte_free(obj, iopte_offset(iopgd, 0), true);
 
 		*iopgd = 0;
-		flush_iopte_range(obj->dev, obj->pd_dma, offset, 1);
+		if (!obj->sram_pool)
+			flush_iopte_range(obj->dev, obj->pd_dma, offset, 1);
 	}
 
 	flush_iotlb_all(obj);
@@ -855,12 +882,16 @@ static int omap_iommu_attach(struct omap_iommu *obj, u32 *iopgd)
 
 	spin_lock(&obj->iommu_lock);
 
-	obj->pd_dma = dma_map_single(obj->dev, iopgd, IOPGD_TABLE_SIZE,
-				     DMA_TO_DEVICE);
-	if (dma_mapping_error(obj->dev, obj->pd_dma)) {
-		dev_err(obj->dev, "DMA map error for L1 table\n");
-		err = -ENOMEM;
-		goto out_err;
+	if (obj->sram_pool) {
+		obj->pd_dma = gen_pool_virt_to_phys(obj->sram_pool, (unsigned long)iopgd);
+	} else {
+		obj->pd_dma = dma_map_single(obj->dev, iopgd, IOPGD_TABLE_SIZE,
+						 DMA_TO_DEVICE);
+		if (dma_mapping_error(obj->dev, obj->pd_dma)) {
+			dev_err(obj->dev, "DMA map error for L1 table\n");
+			err = -ENOMEM;
+			goto out_err;
+		}
 	}
 
 	obj->iopgd = iopgd;
@@ -892,8 +923,9 @@ static void omap_iommu_detach(struct omap_iommu *obj)
 
 	spin_lock(&obj->iommu_lock);
 
-	dma_unmap_single(obj->dev, obj->pd_dma, IOPGD_TABLE_SIZE,
-			 DMA_TO_DEVICE);
+	if (!obj->sram_pool)
+		dma_unmap_single(obj->dev, obj->pd_dma, IOPGD_TABLE_SIZE,
+				 DMA_TO_DEVICE);
 	obj->pd_dma = 0;
 	obj->iopgd = NULL;
 	iommu_disable(obj);
@@ -1262,6 +1294,10 @@ static int omap_iommu_probe(struct platform_device *pdev)
 		if (IS_ERR(obj->group))
 			return PTR_ERR(obj->group);
 
+		obj->sram_pool = of_gen_pool_get(of, "sram", 0);
+		if (obj->sram_pool)
+			dev_info(&pdev->dev, "using sram pool for page tables\n");
+
 		err = iommu_device_sysfs_add(&obj->iommu, obj->dev, NULL,
 					     obj->name);
 		if (err)
@@ -1445,7 +1481,6 @@ static int omap_iommu_attach_init(struct device *dev,
 				  struct omap_iommu_domain *odomain)
 {
 	struct omap_iommu_device *iommu;
-	int i;
 
 	odomain->num_iommus = omap_iommu_count(dev);
 	if (!odomain->num_iommus)
@@ -1456,21 +1491,6 @@ static int omap_iommu_attach_init(struct device *dev,
 	if (!odomain->iommus)
 		return -ENOMEM;
 
-	iommu = odomain->iommus;
-	for (i = 0; i < odomain->num_iommus; i++, iommu++) {
-		iommu->pgtable = kzalloc(IOPGD_TABLE_SIZE, GFP_ATOMIC);
-		if (!iommu->pgtable)
-			return -ENOMEM;
-
-		/*
-		 * should never fail, but please keep this around to ensure
-		 * we keep the hardware happy
-		 */
-		if (WARN_ON(!IS_ALIGNED((long)iommu->pgtable,
-					IOPGD_TABLE_SIZE)))
-			return -EINVAL;
-	}
-
 	return 0;
 }
 
@@ -1479,8 +1499,12 @@ static void omap_iommu_detach_fini(struct omap_iommu_domain *odomain)
 	int i;
 	struct omap_iommu_device *iommu = odomain->iommus;
 
-	for (i = 0; iommu && i < odomain->num_iommus; i++, iommu++)
-		kfree(iommu->pgtable);
+	for (i = 0; iommu && i < odomain->num_iommus; i++, iommu++) {
+		if (iommu->iommu_dev->sram_pool)
+			gen_pool_free(iommu->iommu_dev->sram_pool, (long unsigned int)iommu->pgtable, IOPGD_TABLE_SIZE);
+		else
+			kfree(iommu->pgtable);
+	}
 
 	kfree(odomain->iommus);
 	odomain->num_iommus = 0;
@@ -1527,8 +1551,31 @@ omap_iommu_attach_dev(struct iommu_domain *domain, struct device *dev)
 
 	iommu = omap_domain->iommus;
 	for (i = 0; i < omap_domain->num_iommus; i++, iommu++, arch_data++) {
-		/* configure and enable the omap iommu */
 		oiommu = arch_data->iommu_dev;
+
+		if (oiommu->sram_pool) {
+			struct genpool_data_align data_align = {.align = IOPGD_TABLE_SIZE};
+			iommu->pgtable = (u32 *)gen_pool_alloc_algo(oiommu->sram_pool,
+						       IOPGD_TABLE_SIZE, gen_pool_first_fit_align,
+							   &data_align);
+			if (!iommu->pgtable)
+				return -ENOMEM;
+			memset(iommu->pgtable, 0, IOPGD_TABLE_SIZE);
+		} else {
+			iommu->pgtable = kzalloc(IOPGD_TABLE_SIZE, GFP_ATOMIC);
+			if (!iommu->pgtable)
+				return -ENOMEM;
+		}
+
+		/*
+		 * should never fail, but please keep this around to ensure
+		 * we keep the hardware happy
+		 */
+		if (WARN_ON(!IS_ALIGNED((long)iommu->pgtable,
+					IOPGD_TABLE_SIZE)))
+			return -EINVAL;
+
+		/* configure and enable the omap iommu */
 		ret = omap_iommu_attach(oiommu, iommu->pgtable);
 		if (ret) {
 			dev_err(dev, "can't get omap iommu: %d\n", ret);
@@ -1865,7 +1912,7 @@ static int __init omap_iommu_init(void)
 {
 	struct kmem_cache *p;
 	const slab_flags_t flags = SLAB_HWCACHE_ALIGN;
-	size_t align = 1 << 10; /* L2 pagetable alignement */
+	size_t align = 1 << 10; /* L2 pagetable alignment */
 	struct device_node *np;
 	int ret;
 
