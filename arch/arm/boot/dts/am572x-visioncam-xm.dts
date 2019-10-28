@@ -10,11 +10,12 @@
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/interrupt-controller/irq.h>
 #include "dra74x.dtsi"
+#include "dra74x-mmc-iodelay.dtsi"
 #include "dra74-ipu-dsp-common.dtsi"
 
 / {
 	model = "IMAGO VisionCam XM";
-	compatible = "ti,am5728", "ti,dra742", "ti,dra74", "ti,dra7";
+	compatible = "imago,visioncam-xm", "ti,am5728", "ti,dra742", "ti,dra74", "ti,dra7";
 
 	aliases {
 		rtc0 = &mcp_rtc;
@@ -171,83 +172,6 @@
 };
 
 &dra7_pmx_core {
-	mmc1_pins_default: mmc1_pins_default {
-		pinctrl-single,pins = <
-			0x354 (PIN_INPUT | MUX_MODE0) /* mmc1_clk.clk */
-			0x358 (PIN_INPUT | MUX_MODE0) /* mmc1_cmd.cmd */
-			0x35c (PIN_INPUT | MUX_MODE0) /* mmc1_dat0.dat0 */
-			0x360 (PIN_INPUT | MUX_MODE0) /* mmc1_dat1.dat1 */
-			0x364 (PIN_INPUT | MUX_MODE0) /* mmc1_dat2.dat2 */
-			0x368 (PIN_INPUT | MUX_MODE0) /* mmc1_dat3.dat3 */
-		>;
-	};
-
-	mmc1_pins_sdr12: pinmux_mmc1_sdr12_pins {
-		pinctrl-single,pins = <
-			0x354 (PIN_INPUT | MUX_MODE0)	/* mmc1_clk.clk */
-			0x358 (PIN_INPUT | MUX_MODE0)	/* mmc1_cmd.cmd */
-			0x35c (PIN_INPUT | MUX_MODE0)	/* mmc1_dat0.dat0 */
-			0x360 (PIN_INPUT | MUX_MODE0)	/* mmc1_dat1.dat1 */
-			0x364 (PIN_INPUT | MUX_MODE0)	/* mmc1_dat2.dat2 */
-			0x368 (PIN_INPUT | MUX_MODE0)	/* mmc1_dat3.dat3 */
-		>;
-	};
-
-	mmc1_pins_hs: mmc1_pins_hs {
-		pinctrl-single,pins = <
-			0x354 (PIN_INPUT | MUX_VIRTUAL_MODE11 | MUX_MODE0) /* mmc1_clk.clk */
-			0x358 (PIN_INPUT | MUX_VIRTUAL_MODE11 | MUX_MODE0) /* mmc1_cmd.cmd */
-			0x35c (PIN_INPUT | MUX_VIRTUAL_MODE11 | MUX_MODE0) /* mmc1_dat0.dat0 */
-			0x360 (PIN_INPUT | MUX_VIRTUAL_MODE11 | MUX_MODE0) /* mmc1_dat1.dat1 */
-			0x364 (PIN_INPUT | MUX_VIRTUAL_MODE11 | MUX_MODE0) /* mmc1_dat2.dat2 */
-			0x368 (PIN_INPUT | MUX_VIRTUAL_MODE11 | MUX_MODE0) /* mmc1_dat3.dat3 */
-		>;
-	};
-
-	mmc1_pins_sdr25: pinmux_mmc1_sdr25_pins {
-		pinctrl-single,pins = <
-			0x354 (PIN_INPUT | MUX_VIRTUAL_MODE11 | MUX_MODE0)	/* mmc1_clk.clk */
-			0x358 (PIN_INPUT | MUX_VIRTUAL_MODE11 | MUX_MODE0)	/* mmc1_cmd.cmd */
-			0x35c (PIN_INPUT | MUX_VIRTUAL_MODE11 | MUX_MODE0)	/* mmc1_dat0.dat0 */
-			0x360 (PIN_INPUT | MUX_VIRTUAL_MODE11 | MUX_MODE0)	/* mmc1_dat1.dat1 */
-			0x364 (PIN_INPUT | MUX_VIRTUAL_MODE11 | MUX_MODE0)	/* mmc1_dat2.dat2 */
-			0x368 (PIN_INPUT | MUX_VIRTUAL_MODE11 | MUX_MODE0)	/* mmc1_dat3.dat3 */
-		>;
-	};
-
-	mmc1_pins_sdr50: pinmux_mmc1_sdr50_pins {
-		pinctrl-single,pins = <
-			0x354 (PIN_INPUT | MUX_VIRTUAL_MODE10 | MUX_MODE0)	/* mmc1_clk.clk */
-			0x358 (PIN_INPUT | MUX_VIRTUAL_MODE10 | MUX_MODE0)	/* mmc1_cmd.cmd */
-			0x35c (PIN_INPUT | MUX_VIRTUAL_MODE10 | MUX_MODE0)	/* mmc1_dat0.dat0 */
-			0x360 (PIN_INPUT | MUX_VIRTUAL_MODE10 | MUX_MODE0)	/* mmc1_dat1.dat1 */
-			0x364 (PIN_INPUT | MUX_VIRTUAL_MODE10 | MUX_MODE0)	/* mmc1_dat2.dat2 */
-			0x368 (PIN_INPUT | MUX_VIRTUAL_MODE10 | MUX_MODE0)	/* mmc1_dat3.dat3 */
-		>;
-	};
-
-	mmc1_pins_ddr50: pinmux_mmc1_ddr50_pins {
-		pinctrl-single,pins = <
-			0x354 (PIN_INPUT | MODE_SELECT | MUX_MODE0)	/* mmc1_clk.clk */
-			0x358 (PIN_INPUT | MODE_SELECT | MUX_MODE0)	/* mmc1_cmd.cmd */
-			0x35c (PIN_INPUT | MODE_SELECT | MUX_MODE0)	/* mmc1_dat0.dat0 */
-			0x360 (PIN_INPUT | MODE_SELECT | MUX_MODE0)	/* mmc1_dat1.dat1 */
-			0x364 (PIN_INPUT | MODE_SELECT | MUX_MODE0)	/* mmc1_dat2.dat2 */
-			0x368 (PIN_INPUT | MODE_SELECT | MUX_MODE0)	/* mmc1_dat3.dat3 */
-		>;
-	};
-
-	mmc1_pins_sdr104: pinmux_mmc1_sdr104_pins {
-		pinctrl-single,pins = <
-			0x354 (PIN_INPUT | MODE_SELECT | MUX_MODE0)	/* mmc1_clk.clk */
-			0x358 (PIN_INPUT | MODE_SELECT | MUX_MODE0)	/* mmc1_cmd.cmd */
-			0x35c (PIN_INPUT | MODE_SELECT | MUX_MODE0)	/* mmc1_dat0.dat0 */
-			0x360 (PIN_INPUT | MODE_SELECT | MUX_MODE0)	/* mmc1_dat1.dat1 */
-			0x364 (PIN_INPUT | MODE_SELECT | MUX_MODE0)	/* mmc1_dat2.dat2 */
-			0x368 (PIN_INPUT | MODE_SELECT | MUX_MODE0)	/* mmc1_dat3.dat3 */
-		>;
-	};
-
 //  	pruss2_mdio_default: pruss2_mdio_default {
 //		pinctrl-single,pins = <
 //			0x2A4 (PIN_OUTPUT | MUX_MODE11)	/* mcasp1_aclkx.pr2_mdio_mdclk */
@@ -255,89 +179,12 @@
 ////			AM4372_IOPAD(0xa00, (PIN_INPUT_PULLUP | MUX_MODE7))	/* cam1_data6.gpio4_20 */
 //		>;
 //	};
+
 	uart7_pins: uart7_pins {
 		pinctrl-single,pins = <
 			0x230 (PIN_INPUT_PULLUP | MUX_MODE14)	/* vout1_d21.gpio8_21 */
 			0x21C (PIN_INPUT_PULLUP | MUX_MODE2)	/* vout1_d16.uart7_rxd */
 			0x220 (PIN_OUTPUT | MUX_MODE2)	/* vout1_d17.uart7_txd */
-		>;
-	};
-};
-
-&dra7_iodelay_core {
-	mmc1_iodelay_ddr50_rev11_conf: mmc1_iodelay_ddr50_rev11_conf {
-		pinctrl-pin-array = <
-			0x618 A_DELAY_PS(572) G_DELAY_PS(540)	/* CFG_MMC1_CLK_IN */
-			0x624 A_DELAY_PS(0) G_DELAY_PS(600)	/* CFG_MMC1_CMD_IN */
-			0x630 A_DELAY_PS(403) G_DELAY_PS(120)	/* CFG_MMC1_DAT0_IN */
-			0x63c A_DELAY_PS(23) G_DELAY_PS(60)	/* CFG_MMC1_DAT1_IN */
-			0x648 A_DELAY_PS(25) G_DELAY_PS(60)	/* CFG_MMC1_DAT2_IN */
-			0x654 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT3_IN */
-			0x620 A_DELAY_PS(1525) G_DELAY_PS(0)	/* CFG_MMC1_CLK_OUT */
-			0x628 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_CMD_OEN */
-			0x62c A_DELAY_PS(55) G_DELAY_PS(0)	/* CFG_MMC1_CMD_OUT */
-			0x634 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT0_OEN */
-			0x638 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT0_OUT */
-			0x640 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT1_OEN */
-			0x644 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT1_OUT */
-			0x64c A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT2_OEN */
-			0x650 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT2_OUT */
-			0x658 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT3_OEN */
-			0x65c A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT3_OUT */
-		>;
-	};
-
-	mmc1_iodelay_ddr50_rev20_conf: mmc1_iodelay_ddr50_rev20_conf {
-		pinctrl-pin-array = <
-			0x618 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_CLK_IN */
-			0x620 A_DELAY_PS(1271) G_DELAY_PS(0)	/* CFG_MMC1_CLK_OUT */
-			0x624 A_DELAY_PS(229) G_DELAY_PS(0)	/* CFG_MMC1_CMD_IN */
-			0x628 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_CMD_OEN */
-			0x62C A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_CMD_OUT */
-			0x630 A_DELAY_PS(850) G_DELAY_PS(0)	/* CFG_MMC1_DAT0_IN */
-			0x634 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT0_OEN */
-			0x638 A_DELAY_PS(20) G_DELAY_PS(0)	/* CFG_MMC1_DAT0_OUT */
-			0x63C A_DELAY_PS(468) G_DELAY_PS(0)	/* CFG_MMC1_DAT1_IN */
-			0x640 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT1_OEN */
-			0x644 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT1_OUT */
-			0x648 A_DELAY_PS(466) G_DELAY_PS(0)	/* CFG_MMC1_DAT2_IN */
-			0x64C A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT2_OEN */
-			0x650 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT2_OUT */
-			0x654 A_DELAY_PS(399) G_DELAY_PS(0)	/* CFG_MMC1_DAT3_IN */
-			0x658 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT3_OEN */
-			0x65C A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT3_OUT */
-		>;
-	};
-
-	mmc1_iodelay_sdr104_rev11_conf: mmc1_iodelay_sdr104_rev11_conf {
-		pinctrl-pin-array = <
-			0x620 A_DELAY_PS(1063) G_DELAY_PS(17)	/* CFG_MMC1_CLK_OUT */
-			0x628 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_CMD_OEN */
-			0x62c A_DELAY_PS(23) G_DELAY_PS(0)	/* CFG_MMC1_CMD_OUT */
-			0x634 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT0_OEN */
-			0x638 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT0_OUT */
-			0x640 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT1_OEN */
-			0x644 A_DELAY_PS(2) G_DELAY_PS(0)	/* CFG_MMC1_DAT1_OUT */
-			0x64c A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT2_OEN */
-			0x650 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT2_OUT */
-			0x658 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT3_OEN */
-			0x65c A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT3_OUT */
-		>;
-	};
-
-	mmc1_iodelay_sdr104_rev20_conf: mmc1_iodelay_sdr104_rev20_conf {
-		pinctrl-pin-array = <
-			0x620 A_DELAY_PS(600) G_DELAY_PS(400)	/* CFG_MMC1_CLK_OUT */
-			0x628 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_CMD_OEN */
-			0x62c A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_CMD_OUT */
-			0x634 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT0_OEN */
-			0x638 A_DELAY_PS(30) G_DELAY_PS(0)	/* CFG_MMC1_DAT0_OUT */
-			0x640 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT1_OEN */
-			0x644 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT1_OUT */
-			0x64c A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT2_OEN */
-			0x650 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT2_OUT */
-			0x658 A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT3_OEN */
-			0x65c A_DELAY_PS(0) G_DELAY_PS(0)	/* CFG_MMC1_DAT3_OUT */
 		>;
 	};
 };
@@ -599,22 +446,6 @@
 };
 
 &mmc1 {
-/*	status = "okay";
-	pinctrl-names = "default", "hs";
-	pinctrl-0 = <&mmc1_pins_default>;
-	pinctrl-1 = <&mmc1_pins_hs>;
-	vmmc-supply = <&ldo1_reg>;
-	max-frequency = <96000000>;
-	/delete-property/ sd-uhs-sdr104;
-	/delete-property/ sd-uhs-sdr50;
-	/delete-property/ sd-uhs-ddr50;
-	/delete-property/ sd-uhs-sdr25;
-	/delete-property/ sd-uhs-sdr12;
-	bus-width = <4>;
-//	cd-gpios = <&gpio6 27 GPIO_ACTIVE_LOW>;
-	cap-sd-highspeed;
-	non-removable;*/
-
 	status = "okay";
 	pinctrl-names = "default", "hs", "sdr12", "sdr25", "sdr50", "ddr50-rev11", "sdr104-rev11", "ddr50", "sdr104";
 	pinctrl-0 = <&mmc1_pins_default>;
@@ -622,15 +453,13 @@
 	pinctrl-2 = <&mmc1_pins_sdr12>;
 	pinctrl-3 = <&mmc1_pins_sdr25>;
 	pinctrl-4 = <&mmc1_pins_sdr50>;
-	pinctrl-5 = <&mmc1_pins_ddr50 &mmc1_iodelay_ddr50_rev11_conf>;
+	pinctrl-5 = <&mmc1_pins_ddr50 &mmc1_iodelay_ddr_rev11_conf>;
 	pinctrl-6 = <&mmc1_pins_sdr104 &mmc1_iodelay_sdr104_rev11_conf>;
-	pinctrl-7 = <&mmc1_pins_ddr50 &mmc1_iodelay_ddr50_rev20_conf>;
+	pinctrl-7 = <&mmc1_pins_ddr50 &mmc1_iodelay_ddr_rev20_conf>;
 	pinctrl-8 = <&mmc1_pins_sdr104 &mmc1_iodelay_sdr104_rev20_conf>;
-//	vmmc-supply = <&ldo1_reg>;
 	vmmc-supply = <&vdd_3v3>;
-	vmmc_aux-supply = <&ldo1_reg>;
+	vqmmc-supply = <&ldo1_reg>;
 	bus-width = <4>;
-//	cd-gpios = <&gpio6 27 0>; /* gpio 219 */
 	non-removable;
 	max-frequency = <192000000>;
 };
@@ -745,44 +574,41 @@
 
 /*&pruss1 {
 	status = "okay";
-	pru1_0: pru0@4b234000 {
-		mboxes = <&mailbox3 &mbox_pru1_0>;
-		status = "okay";
-	};
-
-	pru1_1: pru1@4b238000 {
-		mboxes = <&mailbox3 &mbox_pru1_1>;
-		status = "okay";
-	};
+};
+pru1_0 {
+	mboxes = <&mailbox3 &mbox_pru1_0>;
+	status = "okay";
+};
+pru1_1 {
+	mboxes = <&mailbox3 &mbox_pru1_1>;
+	status = "okay";
 };
 
 &pruss2 {
 	status = "okay";
-	pru2_0: pru0@4b2b4000 {
-		mboxes = <&mailbox4 &mbox_pru2_0>;
-		status = "okay";
-	};
-
-	pru2_1: pru1@4b2b8000 {
-		mboxes = <&mailbox4 &mbox_pru2_1>;
-		status = "okay";
-	};
-};*/
+};
+pru2_0 {
+	mboxes = <&mailbox4 &mbox_pru2_0>;
+	status = "okay";
+};
+pru2_1 {
+	mboxes = <&mailbox4 &mbox_pru2_1>;
+	status = "okay";
+};
+*/
 
 &pruss_soc_bus1 {
 	status = "okay";
-
-	pruss1: pruss@0 {
-		status = "okay";
-	};
+};
+&pruss1 {
+	status = "okay";
 };
 
 &pruss_soc_bus2 {
 	status = "okay";
-
-	pruss2: pruss@0 {
-		status = "okay";
-	};
+};
+&pruss2 {
+	status = "okay";
 };
 
 &pruss2_mdio {
