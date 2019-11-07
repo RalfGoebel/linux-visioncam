@@ -10,6 +10,7 @@
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/interrupt-controller/irq.h>
 #include "dra74x.dtsi"
+#include "dra7-mmc-iodelay.dtsi"
 #include "dra74x-mmc-iodelay.dtsi"
 #include "dra74-ipu-dsp-common.dtsi"
 
@@ -188,6 +189,14 @@
 			0x220 (PIN_OUTPUT | MUX_MODE2)	/* vout1_d17.uart7_txd */
 		>;
 	};
+};
+
+&ocmcram2 {
+ status = "okay";
+};
+
+&ocmcram3 {
+ status = "okay";
 };
 
 &i2c1 {
@@ -449,7 +458,7 @@
 &mmc1 {
 	status = "okay";
 	pinctrl-names = "default", "hs", "sdr12", "sdr25", "sdr50", "ddr50-rev11", "sdr104-rev11", "ddr50", "sdr104";
-	pinctrl-0 = <&mmc1_pins_default>;
+	pinctrl-0 = <&mmc1_pins_default_no_clk_pu>;
 	pinctrl-1 = <&mmc1_pins_hs>;
 	pinctrl-2 = <&mmc1_pins_sdr12>;
 	pinctrl-3 = <&mmc1_pins_sdr25>;
@@ -465,70 +474,12 @@
 	max-frequency = <192000000>;
 };
 
-/*&oppdm_mpu {
-	vdd-supply = <&smps12_reg>;
-};*/
 &cpu0 {
 	vdd-supply = <&smps12_reg>;
 	voltage-tolerance = <1>;
 };
 
-/*&oppdm_dspeve {
-	vdd-supply = <&smps45_reg>;
-};
-
-&oppdm_gpu {
-	vdd-supply = <&smps45_reg>;
-};
-
-&oppdm_ivahd {
-	vdd-supply = <&smps45_reg>;
-};
-
-&oppdm_core {
-	vdd-supply = <&smps6_reg>;
-};
-*/
-&mailbox3 {
-	status = "okay";
-	mbox_pru1_0: mbox_pru1_0 {
-		status = "okay";
-	};
-	mbox_pru1_1: mbox_pru1_1 {
-		status = "okay";
-	};
-};
-
-&mailbox4 {
-	status = "okay";
-	mbox_pru2_0: mbox_pru2_0 {
-		status = "okay";
-	};
-	mbox_pru2_1: mbox_pru2_1 {
-		status = "okay";
-	};
-};
-
-&mailbox5 {
-	status = "okay";
-	mbox_ipu1_ipc3x: mbox_ipu1_ipc3x {
-		status = "okay";
-	};
-	mbox_dsp1_ipc3x: mbox_dsp1_ipc3x {
-		status = "okay";
-	};
-};
-
-&mailbox6 {
-	status = "okay";
-	mbox_ipu2_ipc3x: mbox_ipu2_ipc3x {
-		status = "okay";
-	};
-	mbox_dsp2_ipc3x: mbox_dsp2_ipc3x {
-		status = "okay";
-	};
-};
-
+/* Disable IPU and DSP for now
 &mmu0_dsp1 {
 	status = "okay";
 };
@@ -572,10 +523,29 @@
 	status = "okay";
 	memory-region = <&dsp2_memory_region>;
 };
+*/
 
-/*&pruss1 {
+/*
+&mailbox3 {
 	status = "okay";
+	mbox_pru1_0: mbox_pru1_0 {
+		status = "okay";
+	};
+	mbox_pru1_1: mbox_pru1_1 {
+		status = "okay";
+	};
 };
+
+&mailbox4 {
+	status = "okay";
+	mbox_pru2_0: mbox_pru2_0 {
+		status = "okay";
+	};
+	mbox_pru2_1: mbox_pru2_1 {
+		status = "okay";
+	};
+};
+
 pru1_0 {
 	mboxes = <&mailbox3 &mbox_pru1_0>;
 	status = "okay";
@@ -585,9 +555,6 @@ pru1_1 {
 	status = "okay";
 };
 
-&pruss2 {
-	status = "okay";
-};
 pru2_0 {
 	mboxes = <&mailbox4 &mbox_pru2_0>;
 	status = "okay";
@@ -675,12 +642,14 @@ pru2_1 {
 				/* sensor       ID */
 		thermal-sensors = <&tmp102     0>;
 
-/*		board_trips: trips {
+/*		// disable power off board trip
+		board_trips: trips {
 			board_crit: board_crit {
 				temperature = <80000>;
 				hysteresis = <0>;
 				type = "critical";
 			};
-		};*/
+		};
+*/
 	};
 };
