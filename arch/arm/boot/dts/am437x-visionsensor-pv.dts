@@ -17,7 +17,7 @@
 
 / {
 	model = "IMAGO VisionSensor PV";
-	compatible = "ti,am43x-visionsensor-pv","ti,am438x","ti,am43";
+	compatible = "ti,am43x-visionsensor-pv","ti,am4372","ti,am43";
 
 	chosen {
 		stdout-path = &uart0;
@@ -155,6 +155,7 @@
 
 	gpio2_pins: gpio2_pins {
 		pinctrl-single,pins = <
+			AM4372_IOPAD(0x88C, PIN_OUTPUT_PULLUP | MUX_MODE7) /* gpmc_clk.gpio2_1 => TTLOut0 */
 			AM4372_IOPAD(0x8e4, PIN_OUTPUT | MUX_MODE7) /* dss_hsync.gpio2_23 => TrigMode */
 		>;
 	};
@@ -162,7 +163,6 @@
 	gpio4_pins: gpio4_pins {
 		pinctrl-single,pins = <
 			AM4372_IOPAD(0x9d4, PIN_OUTPUT | MUX_MODE7) /* cam1_hd.gpio4_9 => SENSOR.RST */
-			AM4372_IOPAD(0x88C, PIN_OUTPUT_PULLUP | MUX_MODE7) /* gpmc_clk.gpio2_1 => TTLOut0 */
 			AM4372_IOPAD(0x9b8, PIN_OUTPUT_PULLUP | MUX_MODE7) /* cam0_field.gpio4_2 => OUT1 */
 			AM4372_IOPAD(0x9bc, PIN_OUTPUT_PULLUP | MUX_MODE7) /* cam0_wen.gpio4_3 => OUT2 */
 			AM4372_IOPAD(0x9ec, PIN_INPUT | MUX_MODE7) /* cam1_data1.gpio4_15 => IN0 */
@@ -244,7 +244,7 @@
 	tps65218: tps65218@24 {
 		reg = <0x24>;
 		compatible = "ti,tps65218";
-		interrupts = <GIC_SPI 7 IRQ_TYPE_NONE>;
+		interrupts = <GIC_SPI 7 IRQ_TYPE_LEVEL_HIGH>; /* NMIn */
 		interrupt-controller;
 		#interrupt-cells = <2>;
 
@@ -283,12 +283,6 @@
 			regulator-max-microvolt = <1800000>;
 			regulator-boot-on;
 			regulator-always-on;
-		};
-
-		tps65218_gpio: tps65218_gpio {
-			compatible = "ti,tps65218-gpio";
-			gpio-controller;
-			#gpio-cells = <2>;
 		};
 	};
 
@@ -344,16 +338,10 @@
 	pinctrl-1 = <&vpfe0_pins_sleep>;
 };
 
-
-
-&synctimer_32kclk {
+&mux_synctimer32k_ck {
 	assigned-clocks = <&mux_synctimer32k_ck>;
 	assigned-clock-parents = <&clkdiv32k_ick>;
 };
-
-/*&wkup_m3_ipc {
-	ti,scale-data-fw = "am43x-evm-scale-data.bin";
-};*/
 
 &cpu {
 	cpu0-supply = <&dcdc2>;
@@ -363,12 +351,12 @@
 	status = "okay";
 	pinctrl-names = "default";
 	pinctrl-0 = <&pru_pins>;
+};
 
-	pruss1: pruss@0 {
-		status = "okay";
-	};
+&pruss1 {
+	status = "okay";
+};
 
-	pruss0: pruss@40000 {
-		status = "okay";
-	};
+&pruss0 {
+	status = "okay";
 };
