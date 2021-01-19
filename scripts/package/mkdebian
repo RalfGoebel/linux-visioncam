@@ -180,6 +180,7 @@ Description: Linux kernel, version $version
  files, version: $version.
 
 Package: $kernel_headers_packagename
+Provides: linux-headers
 Architecture: $debarch
 Description: Linux kernel headers for $version on $debarch
  This package provides kernel header files for $version on $debarch
