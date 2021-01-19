@@ -16,7 +16,7 @@
 
 /* user space needs this */
 #ifndef AF_RPMSG
-#define AF_RPMSG	45
+#define AF_RPMSG	44
 #define PF_RPMSG	AF_RPMSG
 #endif
 

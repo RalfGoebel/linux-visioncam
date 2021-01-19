@@ -36,12 +36,12 @@
 		#size-cells = <2>;
 		ranges;
 
-		ipu2_memory_region: ipu2-memory@95800000 {
+/*		ipu2_memory_region: ipu2-memory@95800000 {
 			compatible = "shared-dma-pool";
 			reg = <0x0 0x95800000 0x0 0x3800000>;
 			reusable;
 			status = "okay";
-		};
+		};*/
 
 		dsp1_memory_region: dsp1-memory@99000000 {
 			compatible = "shared-dma-pool";
@@ -50,12 +50,12 @@
 			status = "okay";
 		};
 
-		ipu1_memory_region: ipu1-memory@9d000000 {
+/*		ipu1_memory_region: ipu1-memory@9d000000 {
 			compatible = "shared-dma-pool";
 			reg = <0x0 0x9d000000 0x0 0x2000000>;
 			reusable;
 			status = "okay";
-		};
+		};*/
 
 		dsp2_memory_region: dsp2-memory@9f000000 {
 			compatible = "shared-dma-pool";
@@ -79,9 +79,11 @@
 
 	ocp {
 		dma-ranges;
+
 		axi@0 {
 			dma-ranges = <0x80000000 0x80000000 0x80000000>;
 		};
+
 		mmu2: mmu@4881e000 {
 			compatible = "ti,dra7-iommu";
 			reg = <0x4881e000 0x100>;
@@ -91,6 +93,12 @@
 			ti,iommu-bus-err-back;
 			sram = <&ocmcram2>;
 			status = "okay";
+		};
+
+		debugss: debugss {
+				compatible = "ti,dra7xx-debugss";
+				clocks = <&sys_clkin1>;
+				clock-names = "sysclockin1";
 		};
 	};
 
@@ -199,10 +207,6 @@
 };
 
 &ocmcram2 {
- status = "okay";
-};
-
-&ocmcram3 {
  status = "okay";
 };
 
@@ -474,41 +478,20 @@
 	voltage-tolerance = <1>;
 };
 
-/* Disable IPU and DSP for now
-&mmu0_dsp1 {
-	status = "okay";
-};
 
-&mmu1_dsp1 {
-	status = "okay";
-};
-
-&mmu0_dsp2 {
-	status = "okay";
-};
-
-&mmu1_dsp2 {
-	status = "okay";
-};
-
-&mmu_ipu1 {
-	status = "okay";
-};
-
-&mmu_ipu2 {
-	status = "okay";
-};
-
+/* Disable IPU for now */
 &ipu2 {
-	status = "okay";
-	memory-region = <&ipu2_memory_region>;
+	status = "disabled";
+/*	memory-region = <&ipu2_memory_region>;*/
 };
 
 &ipu1 {
-	status = "okay";
-	memory-region = <&ipu1_memory_region>;
+	status = "disabled";
+/*	memory-region = <&ipu1_memory_region>;*/
 };
 
+
+/* Enable DSP cores */
 &dsp1 {
 	status = "okay";
 	memory-region = <&dsp1_memory_region>;
@@ -518,47 +501,7 @@
 	status = "okay";
 	memory-region = <&dsp2_memory_region>;
 };
-*/
 
-/*
-&mailbox3 {
-	status = "okay";
-	mbox_pru1_0: mbox_pru1_0 {
-		status = "okay";
-	};
-	mbox_pru1_1: mbox_pru1_1 {
-		status = "okay";
-	};
-};
-
-&mailbox4 {
-	status = "okay";
-	mbox_pru2_0: mbox_pru2_0 {
-		status = "okay";
-	};
-	mbox_pru2_1: mbox_pru2_1 {
-		status = "okay";
-	};
-};
-
-pru1_0 {
-	mboxes = <&mailbox3 &mbox_pru1_0>;
-	status = "okay";
-};
-pru1_1 {
-	mboxes = <&mailbox3 &mbox_pru1_1>;
-	status = "okay";
-};
-
-pru2_0 {
-	mboxes = <&mailbox4 &mbox_pru2_0>;
-	status = "okay";
-};
-pru2_1 {
-	mboxes = <&mailbox4 &mbox_pru2_1>;
-	status = "okay";
-};
-*/
 
 &pruss_soc_bus1 {
 	status = "okay";
@@ -648,3 +591,4 @@ pru2_1 {
 */
 	};
 };
+

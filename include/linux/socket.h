@@ -207,10 +207,10 @@ struct ucred {
 				 * PF_SMC protocol family that
 				 * reuses AF_INET address family
 				 */
-#define AF_XDP		44	/* XDP sockets			*/
-#define AF_RPMSG	45	/* Remote-processor messaging   */
+/*#define AF_XDP		44*/	/* XDP sockets			*/
+#define AF_RPMSG	44	/* Remote-processor messaging   */
 
-#define AF_MAX		46	/* For now.. */
+#define AF_MAX		45	/* For now.. */
 
 /* Protocol families, same as address families. */
 #define PF_UNSPEC	AF_UNSPEC
