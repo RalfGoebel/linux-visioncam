@@ -182,6 +182,13 @@
 //		>;
 //	};
 
+	uart3_pins: uart3_pins {
+		pinctrl-single,pins = <
+			0x3f8 (PIN_INPUT | MUX_MODE2)	/* uart2_ctsn.uart3_rxd */
+			0x3fc (PIN_OUTPUT | MUX_MODE1)	/* uart2_rtsn.uart3_txd */
+		>;
+	};
+
 	uart7_pins: uart7_pins {
 		pinctrl-single,pins = <
 			0x230 (PIN_INPUT_PULLUP | MUX_MODE14)	/* vout1_d21.gpio8_21 */
@@ -360,25 +367,11 @@
 			wakeup-source;
 		};
 
-/*		tps659038_pwr_button: tps659038_pwr_button {
-			compatible = "ti,palmas-pwrbutton";
-			interrupt-parent = <&tps659038>;
-			interrupts = <1 IRQ_TYPE_EDGE_FALLING>;
-			wakeup-source;
-			ti,palmas-long-press-seconds = <12>;
-		};*/
-
 		tps659038_gpio: tps659038_gpio {
 			compatible = "ti,palmas-gpio";
 			gpio-controller;
 			#gpio-cells = <2>;
 		};
-
-/*		extcon_usb2: tps659038_usb {
-			compatible = "ti,palmas-usb-vid";
-			ti,enable-vbus-detection;
-			vbus-gpio = <&gpio4 21 GPIO_ACTIVE_HIGH>;
-		};*/
 
 	};
 
@@ -426,6 +419,8 @@
 
 &uart3 {
 	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart3_pins>;
 	interrupts-extended = <&crossbar_mpu GIC_SPI 69 IRQ_TYPE_LEVEL_HIGH>,
 			      <&dra7_pmx_core 0x3f8>;
 };
