@@ -31,6 +31,8 @@
 
 #include "sdhci-pltfm.h"
 
+#define SDHCI_OMAP_SYSCONFIG 0x110
+
 #define SDHCI_OMAP_CON		0x12c
 #define CON_DW8			BIT(5)
 #define CON_DMA_MASTER		BIT(20)
@@ -677,7 +679,6 @@ static void sdhci_omap_set_clock(struct sdhci_host *host, unsigned int clock)
 	clkdiv = sdhci_omap_calc_divisor(pltfm_host, clock);
 	clkdiv = (clkdiv & SYSCTL_CLKD_MASK) << SYSCTL_CLKD_SHIFT;
 	sdhci_enable_clk(host, clkdiv);
-
 	sdhci_omap_start_clock(omap_host);
 }
 
@@ -727,42 +728,33 @@ static void sdhci_omap_set_bus_width(struct sdhci_host *host, int width)
 
 static void sdhci_omap_init_74_clocks(struct sdhci_host *host, u8 power_mode)
 {
-	u32 reg;
+	u32 reg_syscfg, reg_con;
 	ktime_t timeout;
 	struct sdhci_pltfm_host *pltfm_host = sdhci_priv(host);
 	struct sdhci_omap_host *omap_host = sdhci_pltfm_priv(pltfm_host);
 
-	if (omap_host->power_mode == power_mode)
-		return;
-
 	if (power_mode != MMC_POWER_ON)
 		return;
 
-	disable_irq(host->irq);
+	/*
+	 * This function is also called after setting 1.8V UHS voltage.
+	 * According to SD Host Controller Simplified Specification Version 3.00,
+	 * we must provide a clock signal for 1 ms before checking DAT lines.
+	 */
 
-	reg = sdhci_omap_readl(omap_host, SDHCI_OMAP_CON);
-	reg |= CON_INIT;
-	sdhci_omap_writel(omap_host, SDHCI_OMAP_CON, reg);
-	sdhci_omap_writel(omap_host, SDHCI_OMAP_CMD, 0x0);
+	// SYSCONFIG: SIDLEMODE = 0x1
+	reg_syscfg = sdhci_omap_readl(omap_host, SDHCI_OMAP_SYSCONFIG);
+	sdhci_omap_writel(omap_host, SDHCI_OMAP_SYSCONFIG,
+		(reg_syscfg & ~0x18) | (1 << 3));
 
-	/* wait 1ms */
-	timeout = ktime_add_ms(ktime_get(), SDHCI_OMAP_TIMEOUT);
-	while (1) {
-		bool timedout = ktime_after(ktime_get(), timeout);
+	// CON: CLKEXTFREE = 1
+	reg_con = sdhci_omap_readl(omap_host, SDHCI_OMAP_CON);
+	sdhci_omap_writel(omap_host, SDHCI_OMAP_CON, reg_con | CON_CLKEXTFREE);
 
-		if (sdhci_omap_readl(omap_host, SDHCI_OMAP_STAT) & INT_CC_EN)
-			break;
-		if (WARN_ON(timedout))
-			return;
-		usleep_range(5, 10);
-	}
+	usleep_range(1000, 1250);
 
-	reg = sdhci_omap_readl(omap_host, SDHCI_OMAP_CON);
-	reg &= ~CON_INIT;
-	sdhci_omap_writel(omap_host, SDHCI_OMAP_CON, reg);
-	sdhci_omap_writel(omap_host, SDHCI_OMAP_STAT, INT_CC_EN);
-
-	enable_irq(host->irq);
+	sdhci_omap_writel(omap_host, SDHCI_OMAP_CON, reg_con);
+	sdhci_omap_writel(omap_host, SDHCI_OMAP_SYSCONFIG, reg_syscfg);
 }
 
 static void sdhci_omap_set_uhs_signaling(struct sdhci_host *host,
